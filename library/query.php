@@ -46,6 +46,12 @@ abstract class Query extends Library {
    * Failed command execution
    */
   const EXCEPTION_FAIL_QUERY = 'sql#7E';
+  /**
+   * Missing or invalid Transaction class
+   *
+   * @since 1.1.0
+   */
+  const EXCEPTION_MISSING_TRANSACTION = 'sql#10C';
 
   /**
    * Event before the query execution. Arguments:
@@ -87,6 +93,18 @@ abstract class Query extends Library {
    * Class name of the base Query object
    */
   const CLASS_QUERY = '\\Sql\\Query';
+  /**
+   * Class name of the base Transaction object
+   *
+   * @since 1.1.0
+   */
+  const CLASS_TRANSACTION = '\\Sql\\Transaction';
+  /**
+   * Class name of the base Builder object
+   *
+   * @since 1.1.0
+   */
+  const CLASS_BUILDER = '\\Sql\\Builder';
 
   /**
    * Store driver class cache
@@ -107,6 +125,13 @@ abstract class Query extends Library {
    * @var string
    */
   private $builder_class;
+  /**
+   * Store the transaction class name for optimalization
+   *
+   * @var string
+   */
+  private $transaction_class;
+  
   /**
    * Store Connection object
    *
@@ -211,12 +236,43 @@ abstract class Query extends Library {
         $extension                = Extension::instance( $extension );
 
         $tmp = $extension->library( implode( '.', $tmp ) );
-        if( empty( $tmp ) ) throw new Exception\System( self::EXCEPTION_MISSING_BUILDER, [ $class ] );
+        if( empty( $tmp ) || !is_subclass_of( $tmp, self::CLASS_BUILDER ) ) throw new Exception\System( self::EXCEPTION_MISSING_BUILDER, [ $class ] );
         else $this->builder_class = $tmp;
       }
     }
 
     $tmp = $this->builder_class;
+    return new $tmp( $this );
+  }
+  /**
+   * Transaction class instantiation
+   *
+   * @since 1.1.0
+   *
+   * @return Transaction
+   * @throws Exception\System
+   */
+  public function transaction() {
+
+    if( empty( $this->transaction_class ) ) {
+
+      $class = get_class( $this );
+      $tmp   = explode( '\\', $class );
+
+      $extension = Extension\Helper::search( $tmp );
+      if( empty( $extension ) ) throw new Exception\System( self::EXCEPTION_MISSING_TRANSACTION, [ $class ] );
+      else {
+
+        $tmp[ count( $tmp ) - 1 ] = 'transaction';
+        $extension                = Extension::instance( $extension );
+
+        $tmp = $extension->library( implode( '.', $tmp ) );
+        if( empty( $tmp ) || !is_subclass_of( $tmp, self::CLASS_TRANSACTION ) ) throw new Exception\System( self::EXCEPTION_MISSING_TRANSACTION, [ $class ] );
+        else $this->transaction_class = $tmp;
+      }
+    }
+
+    $tmp = $this->transaction_class;
     return new $tmp( $this );
   }
 
