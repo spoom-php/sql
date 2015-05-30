@@ -48,6 +48,8 @@ abstract class Query extends Library {
   const EXCEPTION_FAIL_QUERY = 'sql#7E';
   /**
    * Missing or invalid Transaction class
+   *
+   * @since 1.1.0
    */
   const EXCEPTION_MISSING_TRANSACTION = 'sql#10C';
 
@@ -93,10 +95,14 @@ abstract class Query extends Library {
   const CLASS_QUERY = '\\Sql\\Query';
   /**
    * Class name of the base Transaction object
+   *
+   * @since 1.1.0
    */
   const CLASS_TRANSACTION = '\\Sql\\Transaction';
   /**
    * Class name of the base Builder object
+   *
+   * @since 1.1.0
    */
   const CLASS_BUILDER = '\\Sql\\Builder';
 
@@ -240,6 +246,8 @@ abstract class Query extends Library {
   }
   /**
    * Transaction class instantiation
+   *
+   * @since 1.1.0
    *
    * @return Transaction
    * @throws Exception\System
