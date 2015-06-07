@@ -139,7 +139,7 @@ abstract class Builder extends Storage\Multi {
     if( $alias || is_string( $definition ) ) {
 
       $alias = $alias ? $alias : $definition;
-      if( !$this->existAlias( $alias ) ) {
+      if( !$this->existAlias( $alias, $this->_tables ) ) {
         $this->_tables[ $alias ] = is_string( $condition ) ? [ 'definition' => $definition, 'condition' => $condition, 'type' => $type ] : $definition;
       }
     }
@@ -179,7 +179,7 @@ abstract class Builder extends Storage\Multi {
       if( is_string( $alias ) || is_string( $definition ) ) {
 
         $alias = is_string( $alias ) ? $alias : $definition;
-        if( !$this->existAlias( $alias ) ) {
+        if( !$this->existAlias( $alias, $this->_fields ) ) {
           $this->_fields[ $alias ] = $definition;
         }
       }
@@ -232,14 +232,15 @@ abstract class Builder extends Storage\Multi {
   /**
    * Remove expression from the filter type. If no expression specified all filter remove from the type.
    *
-   * @param string      $type this should be where|having
+   * @param string|null $type this should be where|having or null if remove all filter types
    * @param string|null $expression
    *
    * @return self
    */
   public function removeFilter( $type = 'where', $expression = null ) {
 
-    if( isset( $this->_filters[ $type ] ) ) {
+    if( empty( $type ) ) $this->_filters = [ ];
+    else if( isset( $this->_filters[ $type ] ) ) {
 
       if( !is_string( $expression ) ) unset( $this->_filters[ $type ] );
       else foreach( $this->_filters[ $type ] as $index => $filter ) {
@@ -406,12 +407,15 @@ abstract class Builder extends Storage\Multi {
   /**
    * Check if the alias exist in tables, fields
    *
-   * @param string $alias
+   * @param string     $alias   The alias to check
+   * @param array|null $storage The storage to check in (or null if _tables and _fields)
    *
    * @return bool
    */
-  protected function existAlias( $alias ) {
-    return array_key_exists( $alias, $this->_tables ) || array_key_exists( $alias, $this->_fields );
+  protected function existAlias( $alias, $storage = null ) {
+
+    if( $storage === null ) return array_key_exists( $alias, $this->_tables ) || array_key_exists( $alias, $this->_fields );
+    else return array_key_exists( $alias, $storage );
   }
 
   /**
