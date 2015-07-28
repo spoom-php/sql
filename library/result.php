@@ -93,26 +93,6 @@ abstract class Result extends Library implements \Iterator, \Countable {
   }
 
   /**
-   * @param string $index
-   *
-   * @return mixed
-   */
-  public function __get( $index ) {
-    $i = '_' . $index;
-
-    if( property_exists( $this, $i ) ) return $this->{$i};
-    else return parent::__get( $index );
-  }
-  /**
-   * @param string $index
-   *
-   * @return bool
-   */
-  public function __isset( $index ) {
-    return property_exists( $this, '_' . $index ) || parent::__isset( $index );
-  }
-
-  /**
    * Free stored results ( when override )
    * and clear result, reset Iterator
    */
@@ -121,6 +101,57 @@ abstract class Result extends Library implements \Iterator, \Countable {
 
     $this->cursor = 0;
     $this->row    = null;
+  }
+  
+  /**
+   * @since 1.2.0
+   *
+   * @return Exception|null
+   */
+  public function getException() {
+    return $this->_exception;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return string
+   */
+  public function getCommand() {
+    return $this->_command;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return bool|mixed
+   */
+  public function getResult() {
+    return $this->_result;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return int
+   */
+  public function getRows() {
+    return $this->_rows;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return int|null
+   */
+  public function getInsertid() {
+    return $this->_insertid;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @deprecated
+   *
+   * @return Exception|null
+   */
+  public function getError() {
+    return $this->_error;
   }
 
   /**

@@ -17,7 +17,7 @@ use Framework\Storage;
  * @property-read array $customs
  * @property-read array $flags
  */
-abstract class Builder extends Storage\Multi {
+abstract class Builder extends Storage {
 
   /**
    * The Query object that will be used to execute the builded command
@@ -89,29 +89,9 @@ abstract class Builder extends Storage\Multi {
    * @param Query $dbq
    */
   public function __construct( Query $dbq ) {
-    parent::__construct( 'insertion', Storage\Multi::CACHE_NONE );
+    parent::__construct( 'insertion' );
 
     $this->_dbq = $dbq;
-  }
-
-  /**
-   * @param string $index
-   *
-   * @return null|string
-   */
-  public function __get( $index ) {
-    $i = '_' . $index;
-
-    if( property_exists( $this, $i ) ) return $this->{$i};
-    else return parent::__get( $index );
-  }
-  /**
-   * @param string $index
-   *
-   * @return bool
-   */
-  public function __isset( $index ) {
-    return property_exists( $this, '_' . $index ) || parent::__isset( $index );
   }
 
   /**
@@ -429,13 +409,6 @@ abstract class Builder extends Storage\Multi {
     return $this->_dbq->execute( $this->getSelect(), $this->getArray( 'insertion:' ) );
   }
   /**
-   * Build a select command from the builder contents
-   *
-   * @return string
-   */
-  abstract public function getSelect();
-
-  /**
    * Executes an insert command from the builder contents
    *
    * @return Result|Result[]|null
@@ -445,13 +418,6 @@ abstract class Builder extends Storage\Multi {
   public function insert() {
     return $this->_dbq->execute( $this->getInsert(), $this->getArray( 'insertion:' ) );
   }
-  /**
-   * Build an insert command from the builder contents
-   *
-   * @return string
-   */
-  abstract public function getInsert();
-
   /**
    * Executes an update command from the builder contents
    *
@@ -463,13 +429,6 @@ abstract class Builder extends Storage\Multi {
     return $this->_dbq->execute( $this->getUpdate(), $this->getArray( 'insertion:' ) );
   }
   /**
-   * Build an update command from the builder contents
-   *
-   * @return string
-   */
-  abstract public function getUpdate();
-
-  /**
    * Executes a delete command from the builder contents
    *
    * @return Result|Result[]|null
@@ -479,6 +438,98 @@ abstract class Builder extends Storage\Multi {
   public function delete() {
     return $this->_dbq->execute( $this->getDelete(), $this->getArray( 'insertion:' ) );
   }
+
+  /**
+   * @since 1.2.0
+   *
+   * @return Query
+   */
+  public function getDbq() {
+    return $this->_dbq;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getTables() {
+    return $this->_tables;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getFields() {
+    return $this->_fields;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getFilters() {
+    return $this->_filters;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getGroups() {
+    return $this->_groups;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getOrders() {
+    return $this->_orders;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getLimit() {
+    return $this->_limit;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getFlags() {
+    return $this->_flags;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return array
+   */
+  public function getCustoms() {
+    return $this->_customs;
+  }
+
+  /**
+   * Build a select command from the builder contents
+   *
+   * @return string
+   */
+  abstract public function getSelect();
+  /**
+   * Build an insert command from the builder contents
+   *
+   * @return string
+   */
+  abstract public function getInsert();
+  /**
+   * Build an update command from the builder contents
+   *
+   * @return string
+   */
+  abstract public function getUpdate();
   /**
    * Build a delete command from the builder contents
    *

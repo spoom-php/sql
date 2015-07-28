@@ -8,8 +8,6 @@ use Framework\Helper\Library;
 /**
  * Sql query execution and preparse. Also handle Query instantiation and driver class cache
  *
- * TODO support transactions
- *
  * @package Sql
  *
  * @property-read Connection $connection The connection where the commands run
@@ -131,7 +129,7 @@ abstract class Query extends Library {
    * @var string
    */
   private $transaction_class;
-  
+
   /**
    * Store Connection object
    *
@@ -181,41 +179,6 @@ abstract class Query extends Library {
   }
 
   /**
-   * @param string $index
-   *
-   * @return mixed
-   */
-  public function __get( $index ) {
-    $i = '_' . $index;
-
-    if( property_exists( $this, $i ) ) return $this->{$i};
-    else return parent::__get( $index );
-  }
-  /**
-   * @param string $index
-   * @param mixed  $value
-   */
-  public function __set( $index, $value ) {
-    switch( $index ) {
-
-      case 'prefix':
-
-        if( $value instanceof Extension ) $this->_prefix = $value->id;
-        else if( Extension\Helper::validate( $value ) ) $this->_prefix = $value;
-        else if( is_string( $value ) && trim( $value ) !== '' ) $this->_prefix = (string) $value;
-        else $this->_prefix = null;
-    }
-  }
-  /**
-   * @param string $index
-   *
-   * @return bool
-   */
-  public function __isset( $index ) {
-    return property_exists( $this, '_' . $index ) || parent::__isset( $index );
-  }
-
-  /**
    * Builder class instantiation
    *
    * @return Builder
@@ -228,7 +191,7 @@ abstract class Query extends Library {
       $class = get_class( $this );
       $tmp   = explode( '\\', $class );
 
-      $extension = Extension\Helper::search( $tmp );
+      $extension = \Framework::search( $tmp );
       if( empty( $extension ) ) throw new Exception\System( self::EXCEPTION_MISSING_BUILDER, [ $class ] );
       else {
 
@@ -259,7 +222,7 @@ abstract class Query extends Library {
       $class = get_class( $this );
       $tmp   = explode( '\\', $class );
 
-      $extension = Extension\Helper::search( $tmp );
+      $extension = \Framework::search( $tmp );
       if( empty( $extension ) ) throw new Exception\System( self::EXCEPTION_MISSING_TRANSACTION, [ $class ] );
       else {
 
@@ -354,8 +317,8 @@ abstract class Query extends Library {
 
       // handle command ends
       if( !$delimiter && $command_raw[ $i ] == $this->_separator ) {
-        $command_array[ ] = $command_tmp;
-        $command_tmp      = '';
+        $command_array[] = $command_tmp;
+        $command_tmp     = '';
         continue;
       }
 
@@ -380,7 +343,7 @@ abstract class Query extends Library {
 
           $prefix_buffer = [ ];
           for( $j = 0, $buffer_length = strlen( $buffer ); $j < $buffer_length && $j < $prefix_length; ++$j ) {
-            $prefix_buffer[ ] = $prefix[ $j ];
+            $prefix_buffer[] = $prefix[ $j ];
           }
 
           $command_tmp .= implode( '_', $prefix_buffer );
@@ -392,7 +355,7 @@ abstract class Query extends Library {
       $command_tmp .= $command_raw[ $i ];
     }
 
-    if( !empty( $command_tmp ) ) $command_array[ ] = $command_tmp;
+    if( !empty( $command_tmp ) ) $command_array[] = $command_tmp;
     return $command_array;
   }
   /**
@@ -437,7 +400,7 @@ abstract class Query extends Library {
       if( !count( $tmp ) ) return 'NULL';
       foreach( $tmp as $v ) {
         if( !$has_array ) $has_array = is_array( $v ) || is_object( $v );
-        $quoted[ ] = $this->quote( $v );
+        $quoted[] = $this->quote( $v );
       }
 
       return ( $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( $has_array ? '' : ')' );
@@ -473,7 +436,44 @@ abstract class Query extends Library {
    * @return string
    */
   abstract protected function escape( $text );
+  
+  /**
+   * @since 1.2.0
+   *
+   * @return Connection
+   */
+  public function getConnection() {
+    return $this->_connection;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return string
+   */
+  public function getSeparator() {
+    return $this->_separator;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @return string
+   */
+  public function getPrefix() {
+    return $this->_prefix;
+  }
+  /**
+   * @since 1.2.0
+   *
+   * @param string $value
+   */
+  public function setPrefix( $value ) {
 
+    if( $value instanceof Extension ) $this->_prefix = $value->id;
+    else if( Extension\Helper::validate( $value ) ) $this->_prefix = $value;
+    else if( is_string( $value ) && trim( $value ) !== '' ) $this->_prefix = (string) $value;
+    else $this->_prefix = null;
+  }
+  
   /**
    * Returns a Query object instance that can be used database operations
    *
