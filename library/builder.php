@@ -440,54 +440,72 @@ abstract class Builder extends Storage {
   }
 
   /**
+   * @since 1.2.0
+   *
    * @return Query
    */
   public function getDbq() {
     return $this->_dbq;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getTables() {
     return $this->_tables;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getFields() {
     return $this->_fields;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getFilters() {
     return $this->_filters;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getGroups() {
     return $this->_groups;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getOrders() {
     return $this->_orders;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getLimit() {
     return $this->_limit;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getFlags() {
     return $this->_flags;
   }
   /**
+   * @since 1.2.0
+   *
    * @return array
    */
   public function getCustoms() {

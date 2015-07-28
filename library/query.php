@@ -438,24 +438,32 @@ abstract class Query extends Library {
   abstract protected function escape( $text );
   
   /**
+   * @since 1.2.0
+   *
    * @return Connection
    */
   public function getConnection() {
     return $this->_connection;
   }
   /**
+   * @since 1.2.0
+   *
    * @return string
    */
   public function getSeparator() {
     return $this->_separator;
   }
   /**
+   * @since 1.2.0
+   *
    * @return string
    */
   public function getPrefix() {
     return $this->_prefix;
   }
   /**
+   * @since 1.2.0
+   *
    * @param string $value
    */
   public function setPrefix( $value ) {
