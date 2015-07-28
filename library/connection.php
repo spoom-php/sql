@@ -39,23 +39,10 @@ abstract class Connection extends Library {
   }
 
   /**
-   * @param string $index
-   *
-   * @return mixed
+   * @return string
    */
-  public function __get( $index ) {
-    $i = '_' . $index;
-
-    if( property_exists( $this, $i ) ) return $this->{$i};
-    else return parent::__get( $index );
-  }
-  /**
-   * @param string $index
-   *
-   * @return bool
-   */
-  public function __isset( $index ) {
-    return property_exists( $this, '_' . $index ) || parent::__isset( $index );
+  public function getConfiguration() {
+    return $this->_configuration;
   }
 
   /**

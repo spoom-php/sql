@@ -89,6 +89,19 @@ abstract class Transaction extends Library {
   }
 
   /**
+   * @return Query
+   */
+  public function getQuery() {
+    return $this->_query;
+  }
+  /**
+   * @return bool
+   */
+  public function isPending() {
+    return $this->_pending;
+  }
+  
+  /**
    * This will start the transaction and set the state flag for the instance
    */
   abstract public function start();
