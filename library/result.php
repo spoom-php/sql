@@ -104,36 +104,48 @@ abstract class Result extends Library implements \Iterator, \Countable {
   }
   
   /**
+   * @since 1.2.0
+   *
    * @return Exception|null
    */
   public function getException() {
     return $this->_exception;
   }
   /**
+   * @since 1.2.0
+   *
    * @return string
    */
   public function getCommand() {
     return $this->_command;
   }
   /**
+   * @since 1.2.0
+   *
    * @return bool|mixed
    */
   public function getResult() {
     return $this->_result;
   }
   /**
+   * @since 1.2.0
+   *
    * @return int
    */
   public function getRows() {
     return $this->_rows;
   }
   /**
+   * @since 1.2.0
+   *
    * @return int|null
    */
   public function getInsertid() {
     return $this->_insertid;
   }
   /**
+   * @since 1.2.0
+   *
    * @deprecated
    *
    * @return Exception|null

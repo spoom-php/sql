@@ -39,6 +39,8 @@ abstract class Connection extends Library {
   }
 
   /**
+   * @since 1.2.0
+   *
    * @return string
    */
   public function getConfiguration() {
