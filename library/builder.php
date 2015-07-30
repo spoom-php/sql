@@ -89,7 +89,7 @@ abstract class Builder extends Storage {
    * @param Query $dbq
    */
   public function __construct( Query $dbq ) {
-    parent::__construct( 'insertion' );
+    parent::__construct( null, 'insertion' );
 
     $this->_dbq = $dbq;
   }
