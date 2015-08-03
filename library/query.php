@@ -492,7 +492,7 @@ abstract class Query extends Library {
 
       // check driver existance
       $namespace = str_replace( '-', '\\', $driver );
-      if( !is_subclass_of( $namespace . '\\Connection', self::CLASS_CONNECTION ) || !is_subclass_of( $namespace . '\\Query', self::CLASS_QUERY ) ) {
+      if( !is_subclass_of( $namespace . '\\ConnectionInterface', self::CLASS_CONNECTION ) || !is_subclass_of( $namespace . '\\Query', self::CLASS_QUERY ) ) {
         throw new Exception\System( self::EXCEPTION_INVALID_DRIVER, [ $driver ] );
       }
 
