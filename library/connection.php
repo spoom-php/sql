@@ -2,12 +2,13 @@
 
 use Framework\Exception;
 use Framework\Helper\Library;
+use Framework\Helper\LibraryInterface;
 
 /**
  * Interface ConnectionInterface
  * @package Sql
  */
-interface ConnectionInterface {
+interface ConnectionInterface extends LibraryInterface {
 
   /**
    * Save initial connection parameters
