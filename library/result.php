@@ -7,6 +7,8 @@ use Framework\Helper\Library;
  * Class Result
  * @package Sql
  *
+ * TODO implement chunk processing
+ *
  * @property-read bool|mixed     $result    The real result of the query execution
  * @property-read Exception|null $exception The exception object from the execution (if any)
  * @property-read string         $command   The command that creates the result

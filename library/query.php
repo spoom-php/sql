@@ -82,6 +82,10 @@ abstract class Query extends Library {
    * Flag for raw data insertion instead of the quoted version
    */
   const CHARACTER_DATA_RAW = '!';
+  /**
+   * Flag for name quoted data insertion instead of the simple quoted version
+   */
+  const CHARACTER_DATA_NAME = '?';
 
   /**
    * Class name of the base Connection object
@@ -303,6 +307,13 @@ abstract class Query extends Library {
     $command_array = [ ];
     $command_tmp   = '';
 
+    // process the insertion data
+    $tmp = [ ];
+    foreach( $insertion as $i => $v ) {
+      $tmp[ ltrim( $i, self::CHARACTER_DATA_RAW . self::CHARACTER_DATA_NAME ) ] = [ $i{0}, $v ];
+    }
+    $insertion = $tmp;
+
     // iterate and parse the whole command
     $delimiter = null;
     for( $i = 0, $length = strlen( $command_raw ); $i < $length; ++$i ) {
@@ -334,9 +345,33 @@ abstract class Query extends Library {
         // instert data to the query
         if( $buffer{0} != self::CHARACTER_DATA_PREFIX ) {
 
-          $quote  = $delimiter || $buffer{0} == self::CHARACTER_DATA_RAW ? '' : $this->quoter;
-          $buffer = ltrim( $buffer, self::CHARACTER_DATA_RAW );
-          $command_tmp .= $this->quote( array_key_exists( $buffer, $insertion ) ? $insertion[ $buffer ] : null, $quote );
+          $index = ltrim( $buffer, self::CHARACTER_DATA_RAW . self::CHARACTER_DATA_NAME );
+          $value = array_key_exists( $index, $insertion ) ? $insertion[ $buffer ] : [ '', null ];
+          switch( true ) {
+
+            // insert without quotes
+            case (bool) $delimiter:
+            case $value[ 0 ] == self::CHARACTER_DATA_RAW:
+
+              $command_tmp .= $this->quote( $value[ 1 ], '' );
+              break;
+
+            // insert with name quoting (forced by the index)
+            case $value[ 0 ] == self::CHARACTER_DATA_NAME:
+
+              $command_tmp .= $this->quoteName( $value[ 1 ] );
+              break;
+
+            // insert wihtout quotes (by the insertion name)
+            case $buffer{0} == self::CHARACTER_DATA_RAW:
+
+              $command_tmp .= $this->quote( $value[ 1 ], '' );
+              break;
+
+            // insert with simple quoting
+            default:
+              $command_tmp .= $this->quote( $value[ 1 ] );
+          }
 
           // insert prefix to the query
         } else {
@@ -400,7 +435,7 @@ abstract class Query extends Library {
       if( !count( $tmp ) ) return 'NULL';
       foreach( $tmp as $v ) {
         if( !$has_array ) $has_array = is_array( $v ) || is_object( $v );
-        $quoted[] = $this->quote( $v );
+        $quoted[] = $this->quote( $v, $mark );
       }
 
       return ( $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( $has_array ? '' : ')' );
@@ -412,21 +447,35 @@ abstract class Query extends Library {
   /**
    * Get quoted variable names
    *
-   * @since 1.4.0
+   * TODO support array quoting
    *
-   * @param string $value the value to quote
-   * @param string $mark  the character used to quote
+   * @since 1.2.0
+   *
+   * @param string|array $value the value to quote. This can be an array like the `->quote()`
+   * @param string       $mark  the character used to quote
    *
    * @return string
    */
   public function quoteName( $value, $mark = null ) {
+    if( !is_string( $mark ) ) $mark = $this->quoter_name;
 
-    if( !is_string( $value ) ) return $value;
-    else {
+    if( is_string( $value ) ) return $mark . trim( $value, $mark ) . $mark;
+    else if( Enumerable::is( $value ) ) {
 
-      if( !is_string( $mark ) ) $mark = $this->quoter_name;
-      return "{$mark}{$value}{$mark}";
+      $quoted    = [ ];
+      $tmp       = is_object( $value ) ? (array) $value : $value;
+      $has_array = false;
+
+      if( !count( $tmp ) ) return '';
+      foreach( $tmp as $v ) {
+        if( !$has_array ) $has_array = is_array( $v ) || is_object( $v );
+        $quoted[] = $this->quoteName( $v, $mark );
+      }
+
+      return ( $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( $has_array ? '' : ')' );
     }
+
+    return $value;
   }
   /**
    * Escape the given parameter
@@ -436,7 +485,7 @@ abstract class Query extends Library {
    * @return string
    */
   abstract protected function escape( $text );
-  
+
   /**
    * @since 1.2.0
    *
@@ -473,7 +522,7 @@ abstract class Query extends Library {
     else if( is_string( $value ) && trim( $value ) !== '' ) $this->_prefix = (string) $value;
     else $this->_prefix = null;
   }
-  
+
   /**
    * Returns a Query object instance that can be used database operations
    *

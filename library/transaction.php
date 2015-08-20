@@ -8,6 +8,8 @@ use Framework\Helper\Library;
  * @package Sql
  * @since 1.1.0
  *
+ * FIXME handle transaction in transaction (block and ignore mode!)
+ *
  * @property-read Query $query   The source query object
  * @property-read bool  $pending The transaction state: started or not
  */
