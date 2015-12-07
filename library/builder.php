@@ -199,7 +199,7 @@ abstract class Builder extends Storage {
    * @return self
    */
   public function addFilter( $expression, $glue = 'AND', $type = 'where' ) {
-    if( is_string( $expression ) ) {
+    if( is_string( $expression ) || $expression instanceof Builder ) {
 
       $type = strtolower( $type );
       if( !isset( $this->_filters[ $type ] ) ) $this->_filters[ $type ] = [ ];
