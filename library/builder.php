@@ -100,7 +100,7 @@ abstract class Builder extends Storage {
   public function __toString() {
 
     $commands = $this->_dbq->getCommandList( $this->getSelect(), $this->getArray( '' ) );
-    return implode( $this->_dbq->_separator, $commands );
+    return implode( $this->_dbq->separator, $commands );
   }
 
   /**
