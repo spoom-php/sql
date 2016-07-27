@@ -47,7 +47,7 @@ abstract class Transaction extends Library {
    * @param callable $runnable The runnable to call in the transaction
    * @param bool     $silent   Throw the exceptions, or just a false if any exception occurs
    *
-   * @return bool False on rollback (in silent mode) otherwise true
+   * @return mixed False on rollback (in silent mode) otherwise the runnable result's
    * @throws \Exception
    */
   public function execute( callable $runnable, $silent = false ) {

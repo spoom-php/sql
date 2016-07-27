@@ -422,11 +422,12 @@ abstract class Query extends Library {
   public function quote( $value, $mark = null ) {
     if( !is_string( $mark ) ) $mark = $this->quoter;
 
-    if( is_bool( $value ) ) return $value ? '1' : '0';                                              // handle booleans
-    else if( is_null( $value ) || is_resource( $value ) ) return 'NULL';                            // handle real null values
-    else if( is_numeric( $value ) && (string) (float) $value === (string) $value ) return $value;   // handle float or int
-    else if( is_object( $value ) && $value instanceof Builder ) return "({$value})";                // handle Builder objects
-    else if( Enumerable::is( $value ) ) {                                                           // handle enumerable types
+    if( is_bool( $value ) ) return $value ? '1' : '0';
+    else if( is_null( $value ) || is_resource( $value ) ) return 'NULL';
+    else if( is_float( $value ) ) return str_replace( ',', '.', (float) $value );
+    else if( is_int( $value ) ) return (string) (int) $value;
+    else if( is_object( $value ) && $value instanceof Builder ) return "({$value})";
+    else if( Enumerable::is( $value ) ) {
 
       $quoted    = [ ];
       $tmp       = is_object( $value ) ? (array) $value : $value;
