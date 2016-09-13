@@ -404,7 +404,7 @@ abstract class Query extends Library {
       if( !count( $tmp ) ) return 'NULL';
       foreach( $tmp as $v ) {
         if( !$has_array ) $has_array = is_array( $v ) || is_object( $v );
-        $quoted[] = $this->quote( $v );
+        $quoted[] = $this->quote( $v, $mark );
       }
 
       return ( $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( $has_array ? '' : ')' );
