@@ -33,7 +33,7 @@ abstract class Builder extends Storage {
    *
    * @var array
    */
-  private $_tables = [ ];
+  private $_tables = [];
   /**
    * Store the fields in a alias => fieldname structure.
    * If the field has no alias, then the alias will be
@@ -41,7 +41,7 @@ abstract class Builder extends Storage {
    *
    * @var array
    */
-  private $_fields = [ ];
+  private $_fields = [];
   /**
    * Store the filters in a type => [ definition => glue, ... ]
    * structure, where the type is the filter type ( eg: where or having )
@@ -50,20 +50,20 @@ abstract class Builder extends Storage {
    *
    * @var array
    */
-  private $_filters = [ ];
+  private $_filters = [];
 
   /**
    * Store the groups of the query
    *
    * @var array
    */
-  private $_groups = [ ];
+  private $_groups = [];
   /**
    * Store the order fields in  a field => ordering structure, where the ordering is 'ASC' or 'DESC'
    *
    * @var array
    */
-  private $_orders = [ ];
+  private $_orders = [];
 
   /**
    * Store the limit in an array like [ offset, max ]
@@ -77,13 +77,13 @@ abstract class Builder extends Storage {
    *
    * @var array
    */
-  private $_flags = [ ];
+  private $_flags = [];
   /**
    * Stores custom properties
    *
    * @var array
    */
-  private $_customs = [ ];
+  private $_customs = [];
 
   /**
    * @param Query $dbq
@@ -134,7 +134,7 @@ abstract class Builder extends Storage {
    * @return self
    */
   public function removeTable( $alias = null ) {
-    if( !is_string( $alias ) ) $this->_tables = [ ];
+    if( !is_string( $alias ) ) $this->_tables = [];
     else unset( $this->_tables[ $alias ] );
 
     return $this;
@@ -177,7 +177,7 @@ abstract class Builder extends Storage {
    */
   public function removeField( $aliases = null ) {
 
-    if( $aliases == null ) $this->_fields = [ ];
+    if( $aliases == null ) $this->_fields = [];
     else {
 
       $aliases = is_array( $aliases ) ? $aliases : [ $aliases ];
@@ -202,9 +202,9 @@ abstract class Builder extends Storage {
     if( is_string( $expression ) || $expression instanceof Builder ) {
 
       $type = strtolower( $type );
-      if( !isset( $this->_filters[ $type ] ) ) $this->_filters[ $type ] = [ ];
+      if( !isset( $this->_filters[ $type ] ) ) $this->_filters[ $type ] = [];
 
-      $this->_filters[ $type ][ ] = [ 'expression' => $expression, 'glue' => $glue ];
+      $this->_filters[ $type ][] = [ 'expression' => $expression, 'glue' => $glue ];
     }
 
     return $this;
@@ -219,7 +219,7 @@ abstract class Builder extends Storage {
    */
   public function removeFilter( $type = 'where', $expression = null ) {
 
-    if( empty( $type ) ) $this->_filters = [ ];
+    if( empty( $type ) ) $this->_filters = [];
     else if( isset( $this->_filters[ $type ] ) ) {
 
       if( !is_string( $expression ) ) unset( $this->_filters[ $type ] );
@@ -240,7 +240,7 @@ abstract class Builder extends Storage {
    * @return self
    */
   public function addGroup( $definition, $sort = null ) {
-    $this->_groups[ ] = [ $definition, $sort ];
+    $this->_groups[] = [ $definition, $sort ];
 
     return $this;
   }
@@ -253,7 +253,7 @@ abstract class Builder extends Storage {
    */
   public function removeGroup( $definitions = null ) {
 
-    if( !$definitions ) $this->_groups = [ ];
+    if( !$definitions ) $this->_groups = [];
     else {
       $definitions = is_array( $definitions ) ? $definitions : [ $definitions ];
 
@@ -276,7 +276,7 @@ abstract class Builder extends Storage {
    * @return self
    */
   public function addOrder( $definition, $sort = 'ASC' ) {
-    $this->_orders[ ] = [ $definition, $sort ];
+    $this->_orders[] = [ $definition, $sort ];
 
     return $this;
   }
@@ -289,7 +289,7 @@ abstract class Builder extends Storage {
    */
   public function removeOrder( $definitions = null ) {
 
-    if( !$definitions ) $this->_orders = [ ];
+    if( !$definitions ) $this->_orders = [];
     else {
       $definitions = is_array( $definitions ) ? $definitions : [ $definitions ];
 
@@ -328,7 +328,7 @@ abstract class Builder extends Storage {
    */
   public function setFlag( $name = null, $enable = true ) {
 
-    if( !is_string( $name ) ) $this->_flags = [ ];
+    if( !is_string( $name ) ) $this->_flags = [];
     else {
 
       if( $enable ) $this->_flags[ $name ] = $name;
@@ -352,8 +352,8 @@ abstract class Builder extends Storage {
   public function addCustom( $name, $definition ) {
     if( is_string( $name ) && isset( $definition ) ) {
       $name = strtolower( $name );
-      if( !isset( $this->_customs[ $name ] ) ) $this->_customs[ $name ] = [ ];
-      $this->_customs[ $name ][ ] = $definition;
+      if( !isset( $this->_customs[ $name ] ) ) $this->_customs[ $name ] = [];
+      $this->_customs[ $name ][] = $definition;
     }
 
     return $this;
@@ -368,7 +368,7 @@ abstract class Builder extends Storage {
    * @return self
    */
   public function removeCustom( $name = null, $definition = null ) {
-    if( !is_string( $name ) ) $this->_customs = [ ];
+    if( !is_string( $name ) ) $this->_customs = [];
     else if( !$definition ) unset( $this->_customs[ strtolower( $name ) ] );
     else if( isset( $this->_customs[ strtolower( $name ) ] ) ) {
       $name  = strtolower( $name );

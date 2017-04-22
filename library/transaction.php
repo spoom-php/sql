@@ -6,7 +6,7 @@ use Framework\Helper\Library;
 /**
  * Class Transaction
  * @package Sql
- * @since 1.1.0
+ * @since   1.1.0
  *
  * FIXME handle transaction in transaction (block and ignore mode!)
  *
@@ -106,7 +106,7 @@ abstract class Transaction extends Library {
   public function isPending() {
     return $this->_pending;
   }
-  
+
   /**
    * This will start the transaction and set the state flag for the instance
    */

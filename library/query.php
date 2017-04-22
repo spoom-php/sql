@@ -326,24 +326,26 @@ abstract class Query extends Library {
         else if( !$delimiter && in_array( $command_raw[ $i ], $this->delimiter ) ) $delimiter = $command_raw[ $i ];
       }
 
-      // handle command ends
-      if( !$delimiter && $command_raw[ $i ] == $this->_separator ) {
-        $command_array[] = $command_tmp;
-        $command_tmp     = '';
-        continue;
-      }
+      if( !$delimiter ) {
 
-      // insert variable to the command
-      if( $command_raw[ $i ] == self::CHARACTER_DATA_START ) {
-
-        $buffer = '';
-        for( $j = $i + 1; $j < $length && $command_raw[ $j ] != self::CHARACTER_DATA_END; ++$j ) {
-          $buffer .= $command_raw[ $j ];
+        // handle command ends
+        if( $command_raw[ $i ] == $this->_separator ) {
+          $command_array[] = $command_tmp;
+          $command_tmp     = '';
+          continue;
         }
-        $i = $j;
 
-        // instert data to the query
-        if( $buffer{0} != self::CHARACTER_DATA_PREFIX ) {
+        // insert variable to the command
+        if( $command_raw[ $i ] == self::CHARACTER_DATA_START ) {
+
+          $buffer = '';
+          for( $j = $i + 1; $j < $length && $command_raw[ $j ] != self::CHARACTER_DATA_END; ++$j ) {
+            $buffer .= $command_raw[ $j ];
+          }
+          $i = $j;
+
+          // instert data to the query
+          if( $buffer{0} != self::CHARACTER_DATA_PREFIX ) {
 
           $index = ltrim( $buffer, self::CHARACTER_DATA_RAW . self::CHARACTER_DATA_NAME );
           $value = array_key_exists( $index, $insertion ) ? $insertion[ $buffer ] : [ '', null ];
@@ -373,18 +375,19 @@ abstract class Query extends Library {
               $command_tmp .= $this->quote( $value[ 1 ] );
           }
 
-          // insert prefix to the query
-        } else {
+            // insert prefix to the query
+          } else {
 
-          $prefix_buffer = [ ];
-          for( $j = 0, $buffer_length = strlen( $buffer ); $j < $buffer_length && $j < $prefix_length; ++$j ) {
-            $prefix_buffer[] = $prefix[ $j ];
+            $prefix_buffer = [];
+            for( $j = 0, $buffer_length = strlen( $buffer ); $j < $buffer_length && $j < $prefix_length; ++$j ) {
+              $prefix_buffer[] = $prefix[ $j ];
+            }
+
+            $command_tmp .= implode( '_', $prefix_buffer );
           }
 
-          $command_tmp .= implode( '_', $prefix_buffer );
+          continue;
         }
-
-        continue;
       }
 
       $command_tmp .= $command_raw[ $i ];
@@ -443,7 +446,7 @@ abstract class Query extends Library {
     }
 
     // anything else is handled as string
-    return "{$mark}" . $this->escape( $value ) . "{$mark}";
+    return empty( $mark ) ? $value : ( "{$mark}" . $this->escape( $value ) . "{$mark}" );
   }
   /**
    * Get quoted variable names
