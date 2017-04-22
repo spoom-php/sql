@@ -1,7 +1,59 @@
 <?php namespace Sql;
 
+use Framework\Exception;
 use Framework\Helper\Library;
+use Framework\Helper\LibraryInterface;
 
+/**
+ * Interface ConnectionInterface
+ * @package Sql
+ */
+interface ConnectionInterface extends LibraryInterface {
+
+  /**
+   * Save initial connection parameters
+   *
+   * @param string|null $configuration the connection configuration identifier
+   */
+  public function __construct( $configuration = null );
+
+  /**
+   * Create connection with the database using the saved parameters
+   * or check the connection status and try to reconnect if $ping is true
+   *
+   * @param bool $ping check status and reconnect
+   *
+   * @return $this
+   */
+  public function connect( $ping = false );
+  /**
+   * Close the connection if it's active
+   *
+   * @return $this
+   */
+  public function disconnect();
+
+  /**
+   * Get the connection status
+   *
+   * @param bool $try Try to connect if there is no connection
+   *
+   * @return bool
+   */
+  public function isAlive( $try = false );
+  /**
+   * Get the connection configuration
+   *
+   * @return string
+   */
+  public function getConfiguration();
+  /**
+   * Get the last occured exception
+   *
+   * @return \Exception|null
+   */
+  public function getException();
+}
 /**
  * Represent a connection with database that Query class use
  *
@@ -9,7 +61,7 @@ use Framework\Helper\Library;
  *
  * @property-read string $configuration The connection's configuration name
  */
-abstract class Connection extends Library {
+abstract class Connection extends Library implements ConnectionInterface {
 
   /**
    * Failed connection to the database server
@@ -22,6 +74,12 @@ abstract class Connection extends Library {
    * @var string
    */
   protected $_configuration;
+  /**
+   * The last occured exception
+   *
+   * @var \Exception|null
+   */
+  protected $_exception;
 
   /**
    * Save initial connection parameters
@@ -39,6 +97,25 @@ abstract class Connection extends Library {
   }
 
   /**
+   * Reset the object exception state
+   */
+  protected function reset() {
+    $this->_exception = null;
+  }
+
+  /**
+   * Get the connection status
+   *
+   * FIXME this is here just for compatibility reasons. Remove it from 2.x
+   *
+   * @param bool $try Try to connect if there is no connection
+   *
+   * @return bool
+   */
+  public function isAlive( $try = false ) {
+    return false;
+  }
+  /**
    * @since 1.2.0
    *
    * @return string
@@ -46,20 +123,12 @@ abstract class Connection extends Library {
   public function getConfiguration() {
     return $this->_configuration;
   }
-
   /**
-   * Create connection with the database using the saved parameters
-   * or check the connection status and try to reconnect if $ping is true
+   * Get the last occured exception
    *
-   * @param bool $ping check status and reconnect
-   *
-   * @return $this
+   * @return \Exception|null
    */
-  abstract protected function connect( $ping = false );
-  /**
-   * Close the connection if it's active
-   *
-   * @return $this
-   */
-  abstract public function disconnect();
+  public function getException() {
+    return $this->_exception;
+  }
 }

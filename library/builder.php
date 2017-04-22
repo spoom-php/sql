@@ -20,11 +20,20 @@ use Framework\Storage;
 abstract class Builder extends Storage {
 
   /**
+   * The inserted data storage index
+   */
+  const INDEX_DATA = 'insertion:';
+  /**
+   * The inserted data namespace name
+   */
+  const NAMESPACE_DATA = 'insertion';
+
+  /**
    * The Query object that will be used to execute the builded command
    *
    * @var Query
    */
-  private $_dbq = null;
+  private $_query = null;
 
   /**
    * Store the tables in a alias => tablename structure.
@@ -89,9 +98,9 @@ abstract class Builder extends Storage {
    * @param Query $dbq
    */
   public function __construct( Query $dbq ) {
-    parent::__construct( null, 'insertion' );
+    parent::__construct( null, self::NAMESPACE_DATA );
 
-    $this->_dbq = $dbq;
+    $this->_query = $dbq;
   }
 
   /**
@@ -99,8 +108,8 @@ abstract class Builder extends Storage {
    */
   public function __toString() {
 
-    $commands = $this->_dbq->getCommandList( $this->getSelect(), $this->getArray( '' ) );
-    return implode( $this->_dbq->separator, $commands );
+    $commands = $this->_query->getCommandList( $this->getSelect(), $this->getArray( self::INDEX_DATA ) );
+    return implode( $this->_query->separator, $commands );
   }
 
   /**
@@ -401,51 +410,59 @@ abstract class Builder extends Storage {
   /**
    * Executes a select command from the builder contents
    *
-   * @return Result|Result[]|null
+   * @return ResultInterface|ResultInterface[]|null
    * @throws \Framework\Exception\Strict
    * @throws \Framework\Exception\System
    */
   public function select() {
-    return $this->_dbq->execute( $this->getSelect(), $this->getArray( 'insertion:' ) );
+    return $this->_query->execute( $this->getSelect(), $this->getArray( self::INDEX_DATA ) );
   }
   /**
    * Executes an insert command from the builder contents
    *
-   * @return Result|Result[]|null
+   * @return ResultInterface|ResultInterface[]|null
    * @throws \Framework\Exception\Strict
    * @throws \Framework\Exception\System
    */
   public function insert() {
-    return $this->_dbq->execute( $this->getInsert(), $this->getArray( 'insertion:' ) );
+    return $this->_query->execute( $this->getInsert(), $this->getArray( self::INDEX_DATA ) );
   }
   /**
    * Executes an update command from the builder contents
    *
-   * @return Result|Result[]|null
+   * @return ResultInterface|ResultInterface[]|null
    * @throws \Framework\Exception\Strict
    * @throws \Framework\Exception\System
    */
   public function update() {
-    return $this->_dbq->execute( $this->getUpdate(), $this->getArray( 'insertion:' ) );
+    return $this->_query->execute( $this->getUpdate(), $this->getArray( self::INDEX_DATA ) );
   }
   /**
    * Executes a delete command from the builder contents
    *
-   * @return Result|Result[]|null
+   * @return ResultInterface|ResultInterface[]|null
    * @throws \Framework\Exception\Strict
    * @throws \Framework\Exception\System
    */
   public function delete() {
-    return $this->_dbq->execute( $this->getDelete(), $this->getArray( 'insertion:' ) );
+    return $this->_query->execute( $this->getDelete(), $this->getArray( self::INDEX_DATA ) );
   }
 
   /**
    * @since 1.2.0
    *
+   * @deprecated Use `->getQuery()`
+   *
    * @return Query
    */
   public function getDbq() {
-    return $this->_dbq;
+    return $this->getQuery();
+  }
+  /**
+   * @return Query
+   */
+  public function getQuery() {
+    return $this->_query;
   }
   /**
    * @since 1.2.0

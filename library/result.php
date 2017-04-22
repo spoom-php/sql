@@ -2,7 +2,143 @@
 
 use Framework\Exception;
 use Framework\Helper\Library;
+use Framework\Helper\LibraryInterface;
 
+/**
+ * Interface ResultInterface
+ * @package Sql
+ */
+interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
+
+  /**
+   * @param string          $command
+   * @param mixed           $result
+   * @param \Exception|null $exception
+   * @param int             $rows
+   * @param int|null        $insert_id
+   */
+  public function __construct( $command, $result = false, $exception = null, $rows = 0, $insert_id = null );
+
+  /**
+   * Free stored results ( when override )
+   * and clear result, reset Iterator
+   */
+  public function free();
+
+  /**
+   * Get the $field pointed column from the $record pointed row
+   * of the result set
+   *
+   * @param int $record the row index
+   * @param int $field  the column index
+   *
+   * @return mixed
+   */
+  public function get( $record = 0, $field = 0 );
+  /**
+   * Get a column from the result list. The column
+   * defined by the $field param
+   *
+   * @param int $field the column index
+   *
+   * @return array
+   */
+  public function getList( $field = 0 );
+
+  /**
+   * Get the $record pointed row of the result set in an
+   * array where the keys is the field index (position).
+   *
+   * @param int $record the row index
+   *
+   * @return array
+   */
+  public function getArray( $record = 0 );
+  /**
+   * Get the result in 2d array of arrays where
+   * the keys is the field index (position).
+   * If $index param setted, the array keys will be the
+   * $index pointed field value in each object
+   *
+   * @param mixed $index
+   *
+   * @return array[]
+   */
+  public function getArrayList( $index = null );
+
+  /**
+   * Get the $record pointed row of the result set in an
+   * associative array where the keys is the field names
+   *
+   * @param int $record
+   *
+   * @return array
+   */
+  public function getAssoc( $record = 0 );
+  /**
+   * Get the result in 2d array of associative arrays where
+   * the keys is the field names.
+   * If $index param setted, the array keys will be the $index defined
+   * field value in each object
+   *
+   * @param mixed $index
+   *
+   * @return array[]
+   */
+  public function getAssocList( $index = null );
+
+  /**
+   * Get the $record pointed row of the result set in an
+   * object where the properties is the field names
+   *
+   * @param int $record
+   *
+   * @return object
+   */
+  public function getObject( $record = 0 );
+  /**
+   * Get the result in 2d array of objects where
+   * the properties is the field names and values.
+   * If $index param setted, the array keys will be the $index defined
+   * field value in each object
+   *
+   * @param mixed $index
+   *
+   * @return object[]
+   */
+  public function getObjectList( $index = null );
+
+  /**
+   * @since 1.2.0
+   *
+   * @return Exception|null
+   */
+  public function getException();
+  /**
+   * @since 1.2.0
+   *
+   * @return string
+   */
+  public function getCommand();
+  /**
+   * @since 1.2.0
+   *
+   * @return bool|mixed
+   */
+  public function getResult();
+  /**
+   * @since 1.2.0
+   *
+   * @return int
+   */
+  public function getRows();
+  /**
+   * @since 1.2.0
+   *
+   * @return int|null
+   */
+  public function getInsertid();
+}
 /**
  * Class Result
  * @package Sql
@@ -14,18 +150,10 @@ use Framework\Helper\Library;
  * @property-read string         $command   The command that creates the result
  * @property-read int|null       $insertid  The last inserted id from the command
  * @property-read int            $rows      The rows affected in the command execution
- *
  * @property-read Exception|null $error     @depricated
  */
-abstract class Result extends Library implements \Iterator, \Countable {
+abstract class Result extends Library implements ResultInterface {
 
-  /**
-   * Store the result exception, if any
-   *
-   * @var Exception|null
-   * @depricated
-   */
-  private $_error;
   /**
    * Store the result exception, if any
    *
@@ -83,7 +211,7 @@ abstract class Result extends Library implements \Iterator, \Countable {
 
     $this->_command   = $command;
     $this->_result    = $result;
-    $this->_exception = $this->_error = $exception;
+    $this->_exception = $exception;
     $this->_rows      = $rows;
     $this->_insertid  = $insert_id;
   }
@@ -153,7 +281,7 @@ abstract class Result extends Library implements \Iterator, \Countable {
    * @return Exception|null
    */
   public function getError() {
-    return $this->_error;
+    return $this->getException();
   }
 
   /**
@@ -200,87 +328,4 @@ abstract class Result extends Library implements \Iterator, \Countable {
   public function count() {
     return $this->rows;
   }
-
-  /**
-   * Get the $field pointed column from the $record pointed row
-   * of the result set
-   *
-   * @param int $record the row index
-   * @param int $field  the column index
-   *
-   * @return mixed
-   */
-  abstract public function get( $record = 0, $field = 0 );
-  /**
-   * Get a column from the result list. The column
-   * defined by the $field param
-   *
-   * @param int $field the column index
-   *
-   * @return array
-   */
-  abstract public function getList( $field = 0 );
-
-  /**
-   * Get the $record pointed row of the result set in an
-   * array where the keys is the field index (position).
-   *
-   * @param int $record the row index
-   *
-   * @return array
-   */
-  abstract public function getArray( $record = 0 );
-  /**
-   * Get the result in 2d array of arrays where
-   * the keys is the field index (position).
-   * If $index param setted, the array keys will be the
-   * $index pointed field value in each object
-   *
-   * @param mixed $index
-   *
-   * @return array[]
-   */
-  abstract public function getArrayList( $index = null );
-
-  /**
-   * Get the $record pointed row of the result set in an
-   * associative array where the keys is the field names
-   *
-   * @param int $record
-   *
-   * @return array
-   */
-  abstract public function getAssoc( $record = 0 );
-  /**
-   * Get the result in 2d array of associative arrays where
-   * the keys is the field names.
-   * If $index param setted, the array keys will be the $index defined
-   * field value in each object
-   *
-   * @param mixed $index
-   *
-   * @return array[]
-   */
-  abstract public function getAssocList( $index = null );
-
-  /**
-   * Get the $record pointed row of the result set in an
-   * object where the properties is the field names
-   *
-   * @param int $record
-   *
-   * @return object
-   */
-  abstract public function getObject( $record = 0 );
-  /**
-   * Get the result in 2d array of objects where
-   * the properties is the field names and values.
-   * If $index param setted, the array keys will be the $index defined
-   * field value in each object
-   *
-   * @param mixed $index
-   *
-   * @return object[]
-   */
-  abstract public function getObjectList( $index = null );
 }

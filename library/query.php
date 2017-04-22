@@ -4,7 +4,101 @@ use Framework\Exception;
 use Framework\Extension;
 use Framework\Helper\Enumerable;
 use Framework\Helper\Library;
+use Framework\Helper\LibraryInterface;
 
+/**
+ * Interface QueryInterface
+ * @package Sql
+ */
+interface QueryInterface extends LibraryInterface {
+
+  /**
+   * @param Connection            $connection
+   * @param Extension|string|null $prefix
+   */
+  public function __construct( Connection $connection, $prefix = null );
+
+  /**
+   * Builder class instantiation
+   *
+   * @return Builder
+   * @throws Exception\System
+   */
+  public function builder();
+  /**
+   * Transaction class instantiation
+   *
+   * @since 1.1.0
+   *
+   * @return Transaction
+   * @throws Exception\System
+   */
+  public function transaction();
+
+  /**
+   * Execute parametered command and return the result object or a result object list
+   *
+   * @param string $command   The command or commands ( separated by ; ) to execute
+   * @param array  $insertion Insertion array for command
+   *
+   * @return ResultInterface|ResultInterface[]|null
+   * @throws Exception
+   */
+  public function execute( $command, array $insertion = [ ] );
+
+  /**
+   * Get protected and parsed value that can be inserted
+   * to the query with quotes based on type.
+   *
+   * String: escaped version surrounded by apostrophes
+   * Array or Object: converted into ( array[0], array[1], ... ) or if its 2D (array[0][0], array[0][1],...),
+   * (array[1][0], array[1][1], .. ),... all array element will be quoted empty arrays ( or objects ) handled as Null
+   * Null: values converted to NULL ( without apostrophes ) Boolean: converted into 1 or 0 string Builder: objects
+   * converted into a string surrounded by brackets
+   *
+   * @param mixed  $value the value to quote
+   * @param string $mark  the character used to quote strings
+   *
+   * @return string|number
+   */
+  public function quote( $value, $mark = null );
+  /**
+   * Get quoted variable names
+   *
+   * @since 1.4.0
+   *
+   * @param string $value the value to quote
+   * @param string $mark  the character used to quote
+   *
+   * @return string
+   */
+  public function quoteName( $value, $mark = null );
+
+  /**
+   * @since 1.2.0
+   *
+   * @return Connection
+   */
+  public function getConnection();
+  /**
+   * @since 1.2.0
+   *
+   * @return string
+   */
+  public function getSeparator();
+  /**
+   * @since 1.2.0
+   *
+   * @return string
+   */
+  public function getPrefix();
+  /**
+   * @since 1.2.0
+   *
+   * @param string $value
+   */
+  public function setPrefix( $value );
+}
 /**
  * Sql query execution and preparse. Also handle Query instantiation and driver class cache
  *
@@ -90,11 +184,11 @@ abstract class Query extends Library {
   /**
    * Class name of the base Connection object
    */
-  const CLASS_CONNECTION = '\\Sql\\Connection';
+  const CLASS_CONNECTION = '\\Sql\\ConnectionInterface';
   /**
    * Class name of the base Query object
    */
-  const CLASS_QUERY = '\\Sql\\Query';
+  const CLASS_QUERY = '\\Sql\\QueryInterface';
   /**
    * Class name of the base Transaction object
    *
@@ -249,7 +343,7 @@ abstract class Query extends Library {
    * @param string $command   The command or commands ( separated by ; ) to execute
    * @param array  $insertion Insertion array for command
    *
-   * @return Result|Result[]|null
+   * @return ResultInterface|ResultInterface[]|null
    * @throws Exception
    */
   public function execute( $command, array $insertion = [ ] ) {
@@ -279,7 +373,7 @@ abstract class Query extends Library {
       $count = count( $results );
       if( !$count ) throw new Exception\System( self::EXCEPTION_INVALID_RESULT, [ $results ] );
       else foreach( $results as $result ) {
-        if( !( $result instanceof Result ) ) throw new Exception\System( self::EXCEPTION_INVALID_RESULT, [ $result ] );
+        if( !( $result instanceof ResultInterface ) ) throw new Exception\System( self::EXCEPTION_INVALID_RESULT, [ $result ] );
       }
 
       // call after event
@@ -396,16 +490,6 @@ abstract class Query extends Library {
     if( !empty( $command_tmp ) ) $command_array[] = $command_tmp;
     return $command_array;
   }
-  /**
-   * Get executed result or result list for the given command
-   *
-   * @param array  $commands    array of command strings
-   * @param string $raw_command the command list imploded with semicolon and without insertions or prefix changes
-   * @param array  $insertion   the inserted data to the command
-   *
-   * @return Result|Result[]
-   */
-  abstract protected function getResultList( array $commands, $raw_command, array $insertion );
 
   /**
    * Get protected and parsed value that can be inserted
@@ -481,6 +565,17 @@ abstract class Query extends Library {
 
     return $value;
   }
+
+  /**
+   * Get executed result or result list for the given command
+   *
+   * @param array  $commands    array of command strings
+   * @param string $raw_command the command list imploded with semicolon and without insertions or prefix changes
+   * @param array  $insertion   the inserted data to the command
+   *
+   * @return ResultInterface|ResultInterface[]
+   */
+  abstract protected function getResultList( array $commands, $raw_command, array $insertion );
   /**
    * Escape the given parameter
    *
