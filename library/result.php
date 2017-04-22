@@ -102,7 +102,7 @@ abstract class Result extends Library implements \Iterator, \Countable {
     $this->cursor = 0;
     $this->row    = null;
   }
-  
+
   /**
    * @since 1.2.0
    *
