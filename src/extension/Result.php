@@ -1,23 +1,20 @@
-<?php namespace Sql;
+<?php namespace Spoom\Sql;
 
-use Framework\Exception;
-use Framework\Helper\Library;
-use Framework\Helper\LibraryInterface;
+use Spoom\Core\Helper;
 
 /**
  * Interface ResultInterface
- * @package Sql
  */
-interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
+interface ResultInterface extends \Iterator, \Countable {
 
   /**
-   * @param string          $command
+   * @param string          $statement
    * @param mixed           $result
-   * @param \Exception|null $exception
+   * @param \Throwable|null $exception
    * @param int             $rows
    * @param int|null        $insert_id
    */
-  public function __construct( $command, $result = false, $exception = null, $rows = 0, $insert_id = null );
+  public function __construct( string $statement, $result = null, ?\Throwable $exception = null, int $rows = 0, ?int $insert_id = null );
 
   /**
    * Free stored results ( when override )
@@ -34,7 +31,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return mixed
    */
-  public function get( $record = 0, $field = 0 );
+  public function get( int $record = 0, int $field = 0 );
   /**
    * Get a column from the result list. The column
    * defined by the $field param
@@ -43,7 +40,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return array
    */
-  public function getList( $field = 0 );
+  public function getList( int $field = 0 ): array;
 
   /**
    * Get the $record pointed row of the result set in an
@@ -53,7 +50,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return array
    */
-  public function getArray( $record = 0 );
+  public function getArray( int $record = 0 ): array;
   /**
    * Get the result in 2d array of arrays where
    * the keys is the field index (position).
@@ -64,7 +61,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return array[]
    */
-  public function getArrayList( $index = null );
+  public function getArrayList( $index = null ): array;
 
   /**
    * Get the $record pointed row of the result set in an
@@ -74,7 +71,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return array
    */
-  public function getAssoc( $record = 0 );
+  public function getAssoc( int $record = 0 ): array;
   /**
    * Get the result in 2d array of associative arrays where
    * the keys is the field names.
@@ -85,7 +82,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return array[]
    */
-  public function getAssocList( $index = null );
+  public function getAssocList( $index = null ): array;
 
   /**
    * Get the $record pointed row of the result set in an
@@ -95,7 +92,7 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return object
    */
-  public function getObject( $record = 0 );
+  public function getObject( int $record = 0 );
   /**
    * Get the result in 2d array of objects where
    * the properties is the field names and values.
@@ -106,24 +103,24 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return object[]
    */
-  public function getObjectList( $index = null );
+  public function getObjectList( $index = null ): array;
 
   /**
    * @since 1.2.0
    *
-   * @return Exception|null
+   * @return \Throwable|null
    */
-  public function getException();
+  public function getException():?\Throwable;
   /**
    * @since 1.2.0
    *
    * @return string
    */
-  public function getCommand();
+  public function getStatement(): string;
   /**
    * @since 1.2.0
    *
-   * @return bool|mixed
+   * @return mixed
    */
   public function getResult();
   /**
@@ -131,33 +128,30 @@ interface ResultInterface extends LibraryInterface, \Iterator, \Countable {
    *
    * @return int
    */
-  public function getRows();
+  public function getRows(): int;
   /**
    * @since 1.2.0
    *
    * @return int|null
    */
-  public function getInsertid();
+  public function getInsertid():?int;
 }
 /**
  * Class Result
- * @package Sql
  *
- * TODO implement chunk processing
- *
- * @property-read bool|mixed     $result    The real result of the query execution
- * @property-read Exception|null $exception The exception object from the execution (if any)
- * @property-read string         $command   The command that creates the result
- * @property-read int|null       $insertid  The last inserted id from the command
- * @property-read int            $rows      The rows affected in the command execution
- * @property-read Exception|null $error     @depricated
+ * @property-read mixed           $result      The real result of the query execution
+ * @property-read \Throwable|null $exception   The exception object from the execution (if any)
+ * @property-read string          $statement   The statement that creates the result
+ * @property-read int|null        $insertid    The last inserted id from the command
+ * @property-read int             $rows        The rows affected in the command execution
  */
-abstract class Result extends Library implements ResultInterface {
+abstract class Result implements ResultInterface, Helper\AccessableInterface {
+  use Helper\Accessable;
 
   /**
    * Store the result exception, if any
    *
-   * @var Exception|null
+   * @var \Throwable|null
    */
   private $_exception;
   /**
@@ -165,13 +159,13 @@ abstract class Result extends Library implements ResultInterface {
    *
    * @var string
    */
-  private $_command;
+  private $_statement;
 
   /**
    * Store the result object, resouce or
    * other result link
    *
-   * @var bool|mixed
+   * @var mixed
    */
   private $_result;
   /**
@@ -194,137 +188,83 @@ abstract class Result extends Library implements ResultInterface {
    */
   private $cursor = 0;
   /**
-   * The Iterator cursor pointed row object
+   * The Iterator cursor pointed row array
    *
-   * @var null|object
+   * @var null|array
    */
   private $row;
 
-  /**
-   * @param string          $command
-   * @param mixed           $result
-   * @param \Exception|null $exception
-   * @param int             $rows
-   * @param int|null        $insert_id
-   */
-  public function __construct( $command, $result = false, $exception = null, $rows = 0, $insert_id = null ) {
+  //
+  public function __construct( string $statement, $result = null, ?\Throwable $exception = null, int $rows = 0, ?int $insert_id = null ) {
 
-    $this->_command   = $command;
+    $this->_statement = $statement;
     $this->_result    = $result;
     $this->_exception = $exception;
     $this->_rows      = $rows;
     $this->_insertid  = $insert_id;
   }
   /**
-   * Free the exist result
+   * Free the result
    */
   public function __destruct() {
     $this->free();
   }
 
-  /**
-   * Free stored results ( when override )
-   * and clear result, reset Iterator
-   */
+  //
   public function free() {
-    $this->_result = false;
+    $this->_result = null;
 
     $this->cursor = 0;
     $this->row    = null;
   }
 
-  /**
-   * @since 1.2.0
-   *
-   * @return Exception|null
-   */
-  public function getException() {
+  //
+  public function getException(): \Throwable {
     return $this->_exception;
   }
-  /**
-   * @since 1.2.0
-   *
-   * @return string
-   */
-  public function getCommand() {
-    return $this->_command;
+  //
+  public function getStatement(): string {
+    return $this->_statement;
   }
-  /**
-   * @since 1.2.0
-   *
-   * @return bool|mixed
-   */
+  //
   public function getResult() {
     return $this->_result;
   }
-  /**
-   * @since 1.2.0
-   *
-   * @return int
-   */
-  public function getRows() {
+  //
+  public function getRows(): int {
     return $this->_rows;
   }
-  /**
-   * @since 1.2.0
-   *
-   * @return int|null
-   */
-  public function getInsertid() {
+  //
+  public function getInsertid():?int {
     return $this->_insertid;
-  }
-  /**
-   * @since 1.2.0
-   *
-   * @deprecated
-   *
-   * @return Exception|null
-   */
-  public function getError() {
-    return $this->getException();
   }
 
   /**
-   * Return the actual iteration object ( row )
+   * {@inheritdoc}
    *
-   * @return object
+   * @return array
    */
   public function current() {
     return $this->row;
   }
-  /**
-   * Move forward the Iterator
-   */
+  //
   public function next() {
-    $this->row = $this->getObject( ++$this->cursor );
+    $this->row = $this->getArray( ++$this->cursor );
   }
-  /**
-   * Return the actual Iterator key
-   *
-   * @return int|mixed
-   */
+  //
   public function key() {
     return $this->cursor;
   }
-  /**
-   * Checks if current position is valid
-   *
-   * @return bool
-   */
+  //
   public function valid() {
     return $this->row !== null;
   }
-  /**
-   * Rewind the Iterator to the first element
-   */
+  //
   public function rewind() {
     $this->cursor = 0;
-    $this->row    = $this->getObject( $this->cursor );
+    $this->row    = $this->getArray( $this->cursor );
   }
-  /**
-   * Count method for the count(..) function. This result is the
-   * same as ->rows
-   */
+  //
   public function count() {
     return $this->rows;
   }
