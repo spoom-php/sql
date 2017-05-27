@@ -3,6 +3,7 @@
 use Spoom\Core\Storage;
 use Spoom\Core\StorageInterface;
 use Spoom\Core\Helper;
+use Spoom\Core\Exception;
 
 /**
  * Interface StatementInterface
@@ -178,29 +179,37 @@ interface StatementInterface {
   /**
    * Executes a select command from the builder contents
    *
+   * @param array|object $context
+   *
    * @return ResultInterface|ResultInterface[]|null
-   * TODO @throws
+   * @throws StatementException
    */
   public function search( $context = [] );
   /**
    * Executes an insert command from the builder contents
    *
+   * @param array|object $context
+   *
    * @return ResultInterface|ResultInterface[]|null
-   * TODO @throws
+   * @throws StatementException
    */
   public function create( $context = [] );
   /**
    * Executes an update command from the builder contents
    *
+   * @param array|object $context
+   *
    * @return ResultInterface|ResultInterface[]|null
-   * TODO @throws
+   * @throws StatementException
    */
   public function update( $context = [] );
   /**
    * Executes a delete command from the builder contents
    *
-   * @return ResultInterface|ResultInterface[]|null
-   * TODO @throws
+   * @param array|object $context
+   *
+   * @return null|ResultInterface|ResultInterface[]
+   * @throws StatementException
    */
   public function remove( $context = [] );
 
@@ -583,23 +592,19 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
 
   //
   public function search( $context = [] ) {
-    // FIXME merge $context and $this->getContext()
-    return $this->_connection->execute( $this->getSelect(), $this->getContext() );
+    return $this->_connection->execute( $this->getSelect(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
   //
   public function create( $context = [] ) {
-    // FIXME merge $context and $this->getContext()
-    return $this->_connection->execute( $this->getInsert(), $this->getContext() );
+    return $this->_connection->execute( $this->getInsert(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
   //
   public function update( $context = [] ) {
-    // FIXME merge $context and $this->getContext()
-    return $this->_connection->execute( $this->getUpdate(), $this->getContext() );
+    return $this->_connection->execute( $this->getUpdate(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
   //
   public function remove( $context = [] ) {
-    // FIXME merge $context and $this->getContext()
-    return $this->_connection->execute( $this->getDelete(), $this->getContext() );
+    return $this->_connection->execute( $this->getDelete(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
 
   //
@@ -641,5 +646,31 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
   //
   public function getCustomList() {
     return $this->_custom_list;
+  }
+}
+
+/**
+ * Unsuccessful statement execution on the database server
+ *
+ * TODO create custom exception(s) for some basic SQL errors
+ */
+class StatementException extends Exception\Logic implements ExceptionInterface {
+
+  const ID = '7#spoom-sql';
+
+  /**
+   * @param string              $statement
+   * @param ConnectionInterface $connection
+   * @param null|\Throwable     $exception
+   */
+  public function __construct( string $statement, ConnectionInterface $connection, ?\Throwable $exception = null ) {
+
+    $data = [ 'connection' => $connection, 'statement' => $statement, 'error' => $exception->getMessage() ];
+    parent::__construct(
+      Helper\Text::apply( "Failed to execute statement(s) on '{connection.authentication}@{connection.uri}', due to: {error}", $data ),
+      static::ID,
+      $data,
+      $exception
+    );
   }
 }

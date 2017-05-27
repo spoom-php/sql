@@ -1,14 +1,22 @@
 <?php namespace Spoom\Sql;
 
+use Spoom\Core\Application;
 use Spoom\Core\Helper\Collection;
 use Spoom\Core\Helper\Number;
 use Spoom\Core\Helper\Text;
 use Spoom\Core\Helper;
+use Spoom\Core\Exception;
 
 /**
  * Interface ConnectionInterface
+ *
+ * @property-read string $uri
+ * @property string      $authentication
+ * @property string      $database
+ * @property array       $option
+ * @property bool        $connected
  */
-interface ConnectionInterface {
+interface ConnectionInterface extends Helper\AccessableInterface {
 
   /**
    * Connect to the database
@@ -16,6 +24,7 @@ interface ConnectionInterface {
    * @param bool $ping If already connected ping the host, to ensure connection (and reconnect when neccessary)
    *
    * @return static
+   * @throws ConnectionException Can't connect to the server
    */
   public function connect( bool $ping = false );
   /**
@@ -31,12 +40,6 @@ interface ConnectionInterface {
    * @return StatementInterface
    */
   public function statement(): StatementInterface;
-  /**
-   * Get transaction handler
-   *
-   * @return TransactionInterface
-   */
-  public function transaction(): TransactionInterface;
 
   /**
    * Execute statement(s) on the database
@@ -47,7 +50,7 @@ interface ConnectionInterface {
    * @param array           $context   Context to apply on the statement(s)
    *
    * @return ResultInterface|ResultInterface[]
-   * @throws \Throwable TODO create custom exception(s) for some basic SQL errors
+   * @throws StatementException Failed execution
    */
   public function execute( $statement, $context = [] );
 
@@ -92,9 +95,17 @@ interface ConnectionInterface {
   /**
    * Check for valid server connection
    *
+   * @param bool $ping {@see static::connect()}
+   *
    * @return bool
    */
-  public function isConnected(): bool;
+  public function isConnected( bool $ping = true ): bool;
+  /**
+   * Get transaction handler
+   *
+   * @return TransactionInterface
+   */
+  public function getTransaction(): TransactionInterface;
 
   /**
    * Get the database uri
@@ -117,6 +128,7 @@ interface ConnectionInterface {
    * @param null|string $password
    *
    * @return static
+   * @throws ConnectionOptionException
    */
   public function setAuthentication( ?string $user, ?string $password = null );
   /**
@@ -131,21 +143,35 @@ interface ConnectionInterface {
    * @param null|string $value
    *
    * @return static
+   * @throws ConnectionOptionException
    */
   public function setDatabase( ?string $value );
   /**
-   * Get connection (all) metadata
+   * Get connection (all) option
    *
-   * @param null|string $name
+   * @param string|null $name
+   * @param mixed|null  $default
    *
    * @return mixed
    */
-  public function getMeta( ?string $name = null );
+  public function getOption( ?string $name = null, $default = null );
+  /**
+   * Set connection option(s)
+   *
+   * Set to NULL for reset to default
+   *
+   * @param mixed       $value
+   * @param string|null $name
+   *
+   * @return static
+   * @throws ConnectionOptionException
+   */
+  public function setOption( $value, ?string $name = null );
 }
 /**
  * Class Connection
  */
-abstract class Connection implements ConnectionInterface, Helper\AccessableInterface {
+abstract class Connection implements ConnectionInterface {
   use Helper\Accessable;
 
   /**
@@ -244,5 +270,54 @@ abstract class Connection implements ConnectionInterface, Helper\AccessableInter
           return $this->quote( $insertion[ $index ] );
       }
     } );
+  }
+}
+
+/**
+ * Unsuccessful connection to the database server
+ */
+class ConnectionException extends Exception\Runtime implements ExceptionInterface {
+
+  const ID = '6#spoom-sql';
+
+  /**
+   * @param ConnectionInterface $connection
+   * @param null|\Throwable     $exception
+   */
+  public function __construct( ConnectionInterface $connection, ?\Throwable $exception = null ) {
+
+    $data = [ 'connection' => $connection, 'error' => $exception->getMessage() ];
+    parent::__construct(
+      Helper\Text::apply( "Failed to connect '{connection.authentication}@{connection.uri}', due to: {error}", $data ),
+      static::ID,
+      $data,
+      $exception,
+      Application::SEVERITY_CRITICAL
+    );
+  }
+}
+/**
+ * Unable to change connection option
+ */
+class ConnectionOptionException extends Exception\Runtime implements ExceptionInterface {
+
+  const ID = '9#spoom-sql';
+
+  /**
+   * @param string              $option Option name
+   * @param mixed               $value
+   * @param ConnectionInterface $connection
+   * @param null|\Throwable     $exception
+   */
+  public function __construct( string $option, $value, ConnectionInterface $connection, ?\Throwable $exception = null ) {
+
+    $data = [ 'connection' => $connection, 'option' => $option, 'value' => $value, 'error' => $exception->getMessage() ];
+    parent::__construct(
+      Text::apply( "Failed to set {option} on '{connection.authentication}@{connection.uri}', due to: {error}", $data ),
+      static::ID,
+      $data,
+      $exception,
+      Application::SEVERITY_WARNING
+    );
   }
 }

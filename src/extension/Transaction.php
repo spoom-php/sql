@@ -36,16 +36,19 @@ interface TransactionInterface {
    *
    * Does nothing if there is already has pending transactions
    *
+   * @param null|string $savepoint Create a savepoint
+   *
    * @return static
+   * @throws TransactionException Unable to begin a transaction
    */
-  public function begin();
+  public function begin( ?string $savepoint = null );
   /**
    * Create a savepoint
    *
    * @param string $name
    *
    * @return static
-   * @throws Exception TODO define custom exception for not supported operation
+   * @throws TransactionException Unable to create the savepoint
    */
   public function savepoint( string $name );
   /**
@@ -54,12 +57,14 @@ interface TransactionInterface {
    * @param string|null $savepoint Rollback to a specific savepoint or the whole transaction
    *
    * @return static
+   * @throws TransactionException Unable to rollback the transaction
    */
   public function rollback( ?string $savepoint = null );
   /**
    * Commit pending transaction
    *
    * @return static
+   * @throws TransactionException Unable to commit the transaction
    */
   public function commit();
 
@@ -82,38 +87,21 @@ interface TransactionInterface {
  * @property-read ConnectionInterface $connection
  * @property-read bool                $pending
  */
-abstract class Transaction implements TransactionInterface, Helper\AccessableInterface {
-  use Helper\Accessable;
-
-  /**
-   * Database connection
-   *
-   * @var ConnectionInterface
-   */
-  protected $_connection;
-
-  /**
-   * @param ConnectionInterface $connection
-   */
-  public function __construct( ConnectionInterface $connection ) {
-    $this->_connection = $connection;
-  }
+abstract class Transaction implements TransactionInterface {
 
   //
   public function create( callable $runnable, bool $commit = false ) {
-    try {
 
-      // check for already pending transaction
-      if( $this->isPending() ) throw new Exception( 'There is pending transaction', 0 ); // TODO define custom exception
-      else {
+    // check for already pending transaction
+    if( $this->isPending() ) throw new \LogicException( 'There is already a pending transaction' );
+    else try {
 
-        $this->begin();
+      $this->begin();
 
-        $result = $runnable( $this->_connection, $this );
-        if( $commit ) $this->commit();
+      $result = $runnable( $this->getConnection(), $this );
+      if( $commit ) $this->commit();
 
-        return $result;
-      }
+      return $result;
 
     } catch( \Throwable $e ) {
 
@@ -130,16 +118,10 @@ abstract class Transaction implements TransactionInterface, Helper\AccessableInt
     try {
 
       // 
-      if( !$this->isPending() ) {
-        $this->begin();
-      }
+      if( !$this->isPending() ) $this->begin( $savepoint );
+      else if( $savepoint ) $this->savepoint( $savepoint );
 
-      //
-      if( $savepoint ) {
-        $this->savepoint( $savepoint );
-      }
-
-      $result = $runnable( $this->_connection, $this );
+      $result = $runnable( $this->getConnection(), $this );
       if( $commit ) $this->commit();
 
       return $result;
@@ -156,8 +138,23 @@ abstract class Transaction implements TransactionInterface, Helper\AccessableInt
     }
   }
 
-  //
-  public function getConnection(): ConnectionInterface {
-    return $this->_connection;
+}
+
+/**
+ * Failed to change the transaction state
+ */
+class TransactionException extends Exception\Runtime implements ExceptionInterface {
+
+  const ID = '10#spoom-sql';
+
+  /**
+   * @param string              $action
+   * @param ConnectionInterface $connection
+   * @param null|\Throwable     $exception
+   */
+  public function __construct( string $action, ConnectionInterface $connection, ?\Throwable $exception = null ) {
+
+    $data = [ 'connection' => $connection, 'action' => $action, 'error' => $exception->getMessage() ];
+    parent::__construct( Helper\Text::apply( "Failed to change the transaction state to '{action}' on '{connection.authentication}@{connection.uri}', due to: {error}", $data ), static::ID, $data, $exception );
   }
 }

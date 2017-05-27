@@ -8,15 +8,6 @@ use Spoom\Core\Helper;
 interface ResultInterface extends \Iterator, \Countable {
 
   /**
-   * @param string          $statement
-   * @param mixed           $result
-   * @param \Throwable|null $exception
-   * @param int             $rows
-   * @param int|null        $insert_id
-   */
-  public function __construct( string $statement, $result = null, ?\Throwable $exception = null, int $rows = 0, ?int $insert_id = null );
-
-  /**
    * Free stored results ( when override )
    * and clear result, reset Iterator
    */
@@ -194,7 +185,13 @@ abstract class Result implements ResultInterface, Helper\AccessableInterface {
    */
   private $row;
 
-  //
+  /**
+   * @param string          $statement
+   * @param mixed           $result
+   * @param \Throwable|null $exception
+   * @param int             $rows
+   * @param int|null        $insert_id
+   */
   public function __construct( string $statement, $result = null, ?\Throwable $exception = null, int $rows = 0, ?int $insert_id = null ) {
 
     $this->_statement = $statement;
