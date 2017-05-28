@@ -73,11 +73,11 @@ interface ConnectionInterface extends Helper\AccessableInterface {
   /**
    * Quote values as object names
    *
-   * TODO support dot separated names
+   * Supports arrays like `->quote()` and namespace(s) separator
    *
    * @param mixed $value
    *
-   * @return string Property quoted and value to insert into a statment
+   * @return string Property quoted and value to insert into a statement
    */
   public function quoteName( $value ): string;
   /**
@@ -183,6 +183,10 @@ abstract class Connection implements ConnectionInterface {
    */
   const CHARACTER_QUOTE_NAME = "`";
   /**
+   * Separator character for 'namespace' in names
+   */
+  const CHARACTER_NAME_SEPARATOR = '.';
+  /**
    * The parser skips blocks that delimited by these characters
    */
   const CHARACTER_DELIMITER = '\'"`';
@@ -226,8 +230,13 @@ abstract class Connection implements ConnectionInterface {
   //
   public function quoteName( $value ): string {
 
-    if( is_string( $value ) ) return static::CHARACTER_QUOTE_NAME . trim( $value, static::CHARACTER_QUOTE_NAME ) . static::CHARACTER_QUOTE_NAME;
-    else if( Collection::is( $value, true ) ) {
+    if( is_string( $value ) ) {
+
+      return implode( static::CHARACTER_NAME_SEPARATOR, array_map( function ( $v ) {
+        return static::CHARACTER_QUOTE_NAME . trim( $v, static::CHARACTER_QUOTE_NAME ) . static::CHARACTER_QUOTE_NAME;
+      }, explode( static::CHARACTER_NAME_SEPARATOR, $value ) ) );
+
+    } else if( Collection::is( $value, true ) ) {
 
       $quoted    = [];
       $tmp       = Collection::read( $value );

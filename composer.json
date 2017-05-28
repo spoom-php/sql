@@ -1,7 +1,7 @@
 {
   "name": "spoom-php/sql",
   "description": "SQL abstraction for Spoom Framework",
-  "keywords": [ "spoom", "framework", "sql" ],
+  "keywords": [ "spoom", "sql" ],
   "type": "spoom-extension",
   "license": "MIT",
   "authors": [
@@ -15,8 +15,14 @@
     "spoom-php/composer": "^1.0.0",
     "spoom-php/core": "@dev"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^6.0"
+  },
 
   "autoload": {
     "psr-4": {"Spoom\\Sql\\": "src/extension/"}
+  },
+  "autoload-dev": {
+    "psr-4": { "Spoom\\Sql\\": "test/" }
   }
 }

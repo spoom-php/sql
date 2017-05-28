@@ -7,6 +7,8 @@ use Spoom\Core\Exception;
 
 /**
  * Interface StatementInterface
+ *
+ * TODO create unittest
  */
 interface StatementInterface {
 

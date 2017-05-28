@@ -216,7 +216,7 @@ abstract class Result implements ResultInterface, Helper\AccessableInterface {
   }
 
   //
-  public function getException(): \Throwable {
+  public function getException(): ?\Throwable {
     return $this->_exception;
   }
   //
