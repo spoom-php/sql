@@ -209,7 +209,7 @@ abstract class Connection implements ConnectionInterface {
 
     if( is_bool( $value ) ) return $value ? '1' : '0';
     else if( Number::is( $value, true ) ) return Number::write( $value );
-    else if( is_object( $value ) && $value instanceof Statement ) return "({$value})";
+    else if( is_object( $value ) && ( $value instanceof Statement || $value instanceof StatementExpression ) ) return (string) $value;
     else if( Collection::is( $value, true ) ) {
 
       $quoted    = [];
