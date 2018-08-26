@@ -9,7 +9,6 @@ branches:
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 php:
-  - 7.1
   - 7.2
   - nightly
 
