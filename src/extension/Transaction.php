@@ -3,9 +3,7 @@
 use Spoom\Core\Exception;
 use Spoom\Core\Helper;
 
-/**
- * Interface TransactionInterface
- */
+//
 interface TransactionInterface {
 
   /**

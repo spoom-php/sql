@@ -1,33 +1,19 @@
-<?php namespace Spoom\Sql;
+<?php namespace Spoom\Sql\Expression;
 
-use Spoom\Core\Storage;
 use Spoom\Core\StorageInterface;
 use Spoom\Core\Helper;
 use Spoom\Core\Exception;
+use Spoom\Sql\ConnectionInterface;
+use Spoom\Sql\ExceptionInterface;
+use Spoom\Sql\Expression;
+use Spoom\Sql\ResultInterface;
 
-/**
- * Interface StatementInterface
- */
+//
 interface StatementInterface {
 
   const TABLE_INNER = 'INNER';
   const TABLE_LEFT  = 'LEFT';
   const TABLE_RIGHT = 'RIGHT';
-
-  const OPERATOR_NONE           = '{0}';
-  const OPERATOR_EQUAL          = '{0} = {1}';
-  const OPERATOR_EQUAL_NOT      = '{0} <> {1}';
-  const OPERATOR_EQUAL_MULTIPLE = '{0} IN {1}';
-  const OPERATOR_GREATER        = '{0} > {1}';
-  const OPERATOR_GREATER_EQUAL  = '{0} >= {1}';
-  const OPERATOR_SMALLER        = '{0} < {1}';
-  const OPERATOR_SMALLER_EQUAL  = '{0} <= {1}';
-  const OPERATOR_BETWEEN        = '{0} BETWEEN {1} AND {2}';
-  const OPERATOR_PATTERN        = '{0} LIKE {1}';
-  const OPERATOR_ALIAS          = '{0} AS {1}';
-  const OPERATOR_NOT            = 'NOT {0}';
-  const OPERATOR_AND            = '{0} AND {1}';
-  const OPERATOR_OR             = '{0} OR {1}';
 
   const SORT_ASC  = 'ASC';
   const SORT_DESC = 'DESC';
@@ -267,6 +253,8 @@ interface StatementInterface {
   /**
    * Set the limit for the statement
    *
+   * TODO add support for dynamic limits (subquery or something..)
+   *
    * @param int $value  The maximum number of items to get
    * @param int $offset The minimum number of items to skip. ===null means no change
    *
@@ -359,8 +347,6 @@ interface StatementInterface {
   public function getDelete();
 }
 /**
- * Class Statement
- *
  * @property-read ConnectionInterface $connection
  * @property-read array               $table_list
  * @property-read array               $field_list
@@ -371,19 +357,8 @@ interface StatementInterface {
  * @property-read array               $custom_list
  * @property-read array               $flag_list
  */
-abstract class Statement implements StatementInterface, Helper\AccessableInterface {
+abstract class Statement extends Expression implements StatementInterface, Helper\AccessableInterface {
   use Helper\Accessable;
-
-  /**
-   * The Connection object that will be used to execute the statement
-   *
-   * @var ConnectionInterface
-   */
-  private $_connection = null;
-  /**
-   * @var StorageInterface|null
-   */
-  private $_context = null;
 
   /**
    * @var array
@@ -430,15 +405,15 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
    * @param StorageInterface|array $context
    */
   public function __construct( ConnectionInterface $connection, $context = [] ) {
-    $this->_connection = $connection;
-    $this->_context    = Storage::instance( $context );
+    parent::__construct( $connection, '', $context );
 
     $this->supportFilter( [ static::FILTER_SIMPLE, static::FILTER_GROUP ] );
   }
 
   //
   public function __toString() {
-    return '(' . $this->_connection->apply( $this->getSelect(), $this->getContext() ) . ')';
+    $this->setDefinition( $this->getSelect() );
+    return parent::__toString();
   }
 
   /**
@@ -476,19 +451,23 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
 
   //
   public function search( $context = [] ) {
-    return $this->_connection->execute( $this->getSelect(), Helper\Collection::merge( clone $this->getContext(), $context ) );
+    $this->setDefinition( $this->getSelect() );
+    return $this->getConnection()->execute( parent::__toString(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
   //
   public function create( $context = [] ) {
-    return $this->_connection->execute( $this->getInsert(), Helper\Collection::merge( clone $this->getContext(), $context ) );
+    $this->setDefinition( $this->getInsert() );
+    return $this->getConnection()->execute( parent::__toString(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
   //
   public function update( $context = [] ) {
-    return $this->_connection->execute( $this->getUpdate(), Helper\Collection::merge( clone $this->getContext(), $context ) );
+    $this->setDefinition( $this->getUpdate() );
+    return $this->getConnection()->execute( parent::__toString(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
   //
   public function remove( $context = [] ) {
-    return $this->_connection->execute( $this->getDelete(), Helper\Collection::merge( clone $this->getContext(), $context ) );
+    $this->setDefinition( $this->getDelete() );
+    return $this->getConnection()->execute( parent::__toString(), Helper\Collection::merge( clone $this->getContext(), $context ) );
   }
 
   //
@@ -574,8 +553,8 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
       $this->_filter[ $type ] = $merge ? ( $list + $this->_filter[ $type ] ) : $list;
 
       // handle the context
-      if( !$merge ) unset( $this->_context[ static::CONTEXT_FILTER . '.' . $type ] );
-      $this->_context = Helper\Collection::merge( $this->_context, [
+      if( !$merge ) unset( $this->getContext()[ static::CONTEXT_FILTER . '.' . $type ] );
+      Helper\Collection::merge( $this->getContext(), [
         static::CONTEXT_FILTER => [
           $type => $context
         ]
@@ -592,7 +571,7 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
       $this->_filter[ $type ][] = $expression;
 
       // handle the context
-      $this->_context = Helper\Collection::merge( $this->_context, [
+      Helper\Collection::merge( $this->getContext(), [
         static::CONTEXT_FILTER => [
           $type => $context
         ]
@@ -616,9 +595,9 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
 
     // remove the context too 
     $index = static::CONTEXT_FILTER . ( $type ? ".{$type}" : '' );
-    if( $context === null ) unset( $this->_context[ $index ] );
+    if( $context === null ) unset( $this->getContext()[ $index ] );
     else foreach( $context as $name ) {
-      unset( $this->_context[ $index . '.' . $name ] );
+      unset( $this->getContext()[ $index . '.' . $name ] );
     }
 
     return $this;
@@ -757,64 +736,8 @@ abstract class Statement implements StatementInterface, Helper\AccessableInterfa
   }
 
   //
-  public function getConnection() {
-    return $this->_connection;
-  }
-  //
-  public function getContext(): StorageInterface {
-    return $this->_context;
-  }
-}
-
-/**
- * Class StatementExpression
- */
-class StatementExpression {
-
-  /**
-   * @var ConnectionInterface
-   */
-  private $connection;
-
-  /**
-   * @var string
-   */
-  private $definition;
-  /**
-   * @var array
-   */
-  private $argument;
-  /**
-   * @var bool
-   */
-  private $quote;
-
-  /**
-   * @param ConnectionInterface $connection
-   * @param string              $definition
-   * @param array|null          $argument Arguments for the definition if any.. NULL means no parentheses at the endof the definition
-   * @param bool                $quote    Name-quote the definition or leave it
-   */
-  public function __construct( ConnectionInterface $connection, string $definition, ?array $argument = null, bool $quote = false ) {
-    $this->connection = $connection;
-
-    $this->definition = $definition;
-    $this->argument   = $argument;
-    $this->quote      = $quote;
-  }
-
-  /**
-   * @return string
-   */
-  public function __toString() {
-
-    $quote    = $this->quote ? Connection::CHARACTER_DATA_NAME : Connection::CHARACTER_DATA_RAW;
-    $argument = $this->argument === null ? '' : '{argument}';
-
-    return $this->connection->apply( "{{$quote}definition}{$argument}", [
-      'definition' => $this->definition,
-      'argument'   => $this->argument
-    ] );
+  protected function setDefinition( string $value ) {
+    return parent::setDefinition( '(' . $value . ')' );
   }
 }
 

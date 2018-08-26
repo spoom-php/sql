@@ -19,9 +19,18 @@ class ConnectionTest extends TestCase {
     // test data quoting
     $this->assertEquals( '(0,1)', $connection->quote( [ false, true ] ) );
     $this->assertEquals( '(123,2.1)', $connection->quote( [ 123, 2.1 ] ) );
+    $this->assertEquals( '123,2.1', $connection->quote( [ 123, 2.1 ], false ), 'This shouldn\'t be enclosed by parenthesis' );
     $this->assertEquals( 'NULL,NULL', $connection->quote( [ null, [] ] ) );
-    $this->assertEquals( "('a','b'),('c','d')", $connection->quote( [ [ 'a', 'b' ], [ 'c', 'd' ] ] ) );
+    $this->assertEquals( "('a','b'),('c','d')", $connection->quote( [ [ 'a', 'b' ], [ 'c', 'd' ] ], false ), 'This should still be enclosed by parenthesis' );
     $this->assertEquals( "'this is a test string'", $connection->quote( 'this is a test string' ) );
+
+    // test special name quoting
+    $this->assertEquals( 'DEFAULT', $connection->quote( $connection->name( 'DEFAULT' ) ), 'This should be unquoted because its a fully uppercase string (a keyword)' );
+    $this->assertEquals( '`Default`', $connection->quote( $connection->name( 'Default' ) ), 'This should be namequoted despite the called `->quote()` method' );
+    $this->assertEquals( '`SCHEME`.`database`', $connection->quote( $connection->name( 'SCHEME.database' ) ), 'This should be name quoted even if there is an uppercase string in it' );
+
+    // test special expression quoting
+    $this->assertEquals( '`column` = 12 AND ISNULL( `column2` )', $connection->quote( $connection->expression( '{!0} = {1} AND ISNULL( {!2} )', [ 'column', 12, 'column2' ] ) ), 'This should be an unqouted expression, with applied context' );
   }
 
   /**
@@ -58,7 +67,7 @@ class ConnectionMock extends Connection {
     throw new \LogicException( 'Not implemented' );
   }
   //
-  public function statement(): StatementInterface {
+  public function statement(): Expression\StatementInterface {
     throw new \LogicException( 'Not implemented' );
   }
   //

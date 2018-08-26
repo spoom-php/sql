@@ -8,8 +8,6 @@ use Spoom\Core\Helper;
 use Spoom\Core\Exception;
 
 /**
- * Interface ConnectionInterface
- *
  * @property-read string $uri
  * @property string      $authentication
  * @property string      $database
@@ -37,9 +35,28 @@ interface ConnectionInterface extends Helper\AccessableInterface {
   /**
    * Create an empty statement
    *
-   * @return StatementInterface
+   * @return Expression\StatementInterface
    */
-  public function statement(): StatementInterface;
+  public function statement(): Expression\StatementInterface;
+  /**
+   * Create a new name
+   *
+   * @param string     $definition
+   * @param bool       $quote
+   * @param array|null $argument_list
+   *
+   * @return Expression\Name
+   */
+  public function name( string $definition, ?bool $quote = null, ?array $argument_list = null ): Expression\Name;
+  /**
+   * Create a new expression
+   *
+   * @param string       $definition
+   * @param object|array $context
+   *
+   * @return Expression
+   */
+  public function expression( string $definition, $context = null ): Expression;
 
   /**
    * Execute statement(s) on the database
@@ -50,7 +67,7 @@ interface ConnectionInterface extends Helper\AccessableInterface {
    * @param array           $context   Context to apply on the statement(s)
    *
    * @return ResultInterface|ResultInterface[]
-   * @throws StatementException Failed execution
+   * @throws Expression\StatementException Failed execution
    */
   public function execute( $statement, $context = [] );
 
@@ -66,20 +83,22 @@ interface ConnectionInterface extends Helper\AccessableInterface {
    * Quote values as a data
    *
    * @param mixed $value
+   * @param bool  $parenthesis Auto add parenthesis to a list of quotes
    *
    * @return string Property quoted and escaped value to insert into a statment
    */
-  public function quote( $value ): string;
+  public function quote( $value, bool $parenthesis = true ): string;
   /**
    * Quote values as object names
    *
    * Supports arrays like `->quote()` and namespace(s) separator
    *
    * @param mixed $value
+   * @param bool  $parenthesis Auto add parenthesis to a list of quotes
    *
    * @return string Property quoted and value to insert into a statement
    */
-  public function quoteName( $value ): string;
+  public function quoteName( $value, bool $parenthesis = true ): string;
   /**
    * Apply a context to a statement
    *
@@ -194,6 +213,10 @@ abstract class Connection implements ConnectionInterface {
    * Command separator character for multi statement
    */
   const CHARACTER_SEPARATOR = ';';
+  /**
+   * "Select all" wildcard for column selection
+   */
+  const CHARACTER_WILDCARD = '*';
 
   /**
    * Flag for raw data insertion instead of the quoted version
@@ -205,11 +228,20 @@ abstract class Connection implements ConnectionInterface {
   const CHARACTER_DATA_NAME = '!';
 
   //
-  public function quote( $value ): string {
+  public function expression( string $definition, $context = null ): Expression {
+    return new Expression( $this, $definition, $context );
+  }
+  //
+  public function name( string $definition, ?bool $quote = null, ?array $argument_list = null ): Expression\Name {
+    return new Expression\Name( $this, $definition, $argument_list, $quote );
+  }
+
+  //
+  public function quote( $value, bool $parenthesis = true ): string {
 
     if( is_bool( $value ) ) return $value ? '1' : '0';
     else if( Number::is( $value, true ) ) return Number::write( $value );
-    else if( is_object( $value ) && ( $value instanceof Statement || $value instanceof StatementExpression ) ) return (string) $value;
+    else if( is_object( $value ) && $value instanceof Expression ) return (string) $value;
     else if( Collection::is( $value, true ) ) {
 
       $quoted    = [];
@@ -222,18 +254,23 @@ abstract class Connection implements ConnectionInterface {
         $quoted[] = $this->quote( $v );
       }
 
-      return ( $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( $has_array ? '' : ')' );
+      return ( !$parenthesis || $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( !$parenthesis || $has_array ? '' : ')' );
     }
 
     return Text::is( $value ) ? ( static::CHARACTER_QUOTE . $this->escape( (string) $value ) . static::CHARACTER_QUOTE ) : 'NULL';
   }
   //
-  public function quoteName( $value ): string {
+  public function quoteName( $value, bool $parenthesis = true ): string {
+
+    // handle Expressions & Statements
+    if( is_object( $value ) && $value instanceof Expression ) {
+      $value = (string) $value;
+    }
 
     if( is_string( $value ) ) {
 
       return implode( static::CHARACTER_NAME_SEPARATOR, array_map( function ( $v ) {
-        return static::CHARACTER_QUOTE_NAME . trim( $v, static::CHARACTER_QUOTE_NAME ) . static::CHARACTER_QUOTE_NAME;
+        return $v === static::CHARACTER_WILDCARD ? $v : ( static::CHARACTER_QUOTE_NAME . trim( $v, static::CHARACTER_QUOTE_NAME ) . static::CHARACTER_QUOTE_NAME );
       }, explode( static::CHARACTER_NAME_SEPARATOR, $value ) ) );
 
     } else if( Collection::is( $value, true ) ) {
@@ -249,7 +286,7 @@ abstract class Connection implements ConnectionInterface {
           $quoted[] = $this->quoteName( $v );
         }
 
-        return ( $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( $has_array ? '' : ')' );
+        return ( !$parenthesis || $has_array ? '' : '(' ) . implode( ',', $quoted ) . ( !$parenthesis || $has_array ? '' : ')' );
       }
     }
 

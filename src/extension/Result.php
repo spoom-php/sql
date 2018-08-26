@@ -2,9 +2,7 @@
 
 use Spoom\Core\Helper;
 
-/**
- * Interface ResultInterface
- */
+//
 interface ResultInterface extends \Iterator, \Countable {
 
   /**
@@ -81,7 +79,7 @@ interface ResultInterface extends \Iterator, \Countable {
    *
    * @param int $record
    *
-   * @return object
+   * @return \object
    */
   public function getObject( int $record = 0 );
   /**
@@ -94,7 +92,7 @@ interface ResultInterface extends \Iterator, \Countable {
    *
    * @return object[]
    */
-  public function getObjectList( $index = null ): array;
+  public function getObjectList( string $index = null ): array;
 
   /**
    * @since 1.2.0
@@ -128,8 +126,6 @@ interface ResultInterface extends \Iterator, \Countable {
   public function getInsertid():?int;
 }
 /**
- * Class Result
- *
  * @property-read mixed           $result      The real result of the query execution
  * @property-read \Throwable|null $exception   The exception object from the execution (if any)
  * @property-read string          $statement   The statement that creates the result
