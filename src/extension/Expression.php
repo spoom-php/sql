@@ -26,7 +26,7 @@ class Expression {
    * @param string              $definition
    * @param array|null          $context
    */
-  public function __construct( ConnectionInterface $connection, string $definition, $context = null ) {
+  public function __construct( ConnectionInterface $connection, string $definition, $context = [] ) {
     $this->_connection = $connection;
     $this->_definition = $definition;
 

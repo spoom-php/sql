@@ -56,7 +56,7 @@ interface ConnectionInterface extends Helper\AccessableInterface {
    *
    * @return Expression
    */
-  public function expression( string $definition, $context = null ): Expression;
+  public function expression( string $definition, $context = [] ): Expression;
 
   /**
    * Execute statement(s) on the database
@@ -228,7 +228,7 @@ abstract class Connection implements ConnectionInterface {
   const CHARACTER_DATA_NAME = '!';
 
   //
-  public function expression( string $definition, $context = null ): Expression {
+  public function expression( string $definition, $context = [] ): Expression {
     return new Expression( $this, $definition, $context );
   }
   //
