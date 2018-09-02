@@ -412,7 +412,7 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
 
   //
   public function __toString() {
-    $this->setDefinition( $this->getSelect() );
+    $this->setDefinition( $this->getSelect(), true );
     return parent::__toString();
   }
 
@@ -736,8 +736,8 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
   }
 
   //
-  protected function setDefinition( string $value ) {
-    return parent::setDefinition( '(' . $value . ')' );
+  protected function setDefinition( string $value, bool $parenthesis = false ) {
+    return parent::setDefinition( $parenthesis ? ( '(' . $value . ')' ) : $value );
   }
 }
 
