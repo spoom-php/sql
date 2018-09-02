@@ -33,9 +33,11 @@ class Expression {
     $this->_context = Storage::instance( $context );
   }
 
-  /**
-   * @return string
-   */
+  //
+  public function __clone() {
+    $this->_context = clone $this->_context;
+  }
+  //
   public function __toString() {
     return $this->_connection->apply( $this->_definition, $this->_context );
   }
