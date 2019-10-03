@@ -202,7 +202,7 @@ interface StatementInterface {
   /**
    * Remove (all) group(s)
    *
-   * @param string[]|StatementInterface[] $list List of expressions to remove
+   * @param array<string|StatementInterface>|null $list List of expressions to remove
    *
    * @return static
    */
@@ -236,7 +236,7 @@ interface StatementInterface {
   /**
    * Remove (all) sort(s)
    *
-   * @param string[]|StatementInterface[] $list List of expressions to remove
+   * @param array<string|StatementInterface>|null $list List of expressions to remove
    *
    * @return static
    */
@@ -245,7 +245,7 @@ interface StatementInterface {
   /**
    * Get the limit
    *
-   * @param int $offset
+   * @param int|null $offset
    *
    * @return int
    */
@@ -256,7 +256,7 @@ interface StatementInterface {
    * TODO add support for dynamic limits (subquery or something..)
    *
    * @param int $value  The maximum number of items to get
-   * @param int $offset The minimum number of items to skip. ===null means no change
+   * @param int|null $offset The minimum number of items to skip. ===null means no change
    *
    * @return static
    */
@@ -285,7 +285,7 @@ interface StatementInterface {
   /**
    * @param null|string $name
    *
-   * @return mixed
+   * @return array
    */
   public function getCustom( ?string $name = null ): array;
   /**
@@ -489,7 +489,7 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
   //
   public function addTable( $definition, ?string $alias = null, $filter = null, string $type = self::TABLE_INNER ) {
 
-    $alias                  = $alias ? $alias : Helper\Text::read( $definition );
+    $alias                  = $alias ? $alias : Helper\Text::cast( $definition );
     $this->_table[ $alias ] = [ 'definition' => $definition, 'filter' => $filter, 'type' => $type ];
 
     return $this;
@@ -518,7 +518,7 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
     // force aliases from numeric indexes
     $tmp = [];
     foreach( $list as $alias => $field ) {
-      $tmp[ is_numeric( $alias ) ? Helper\Text::read( $field ) : $alias ] = $field;
+      $tmp[ is_numeric( $alias ) ? Helper\Text::cast( $field ) : $alias ] = $field;
     }
     $list = $tmp;
 
@@ -593,7 +593,7 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
       if( $index !== false ) array_splice( $this->_filter[ $type ], $index, 1 );
     }
 
-    // remove the context too 
+    // remove the context too
     $index = static::CONTEXT_FILTER . ( $type ? ".{$type}" : '' );
     if( $context === null ) unset( $this->getContext()[ $index ] );
     else foreach( $context as $name ) {
@@ -618,15 +618,17 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
     }
 
     $this->_group = $tmp;
+    return $this;
   }
   //
   public function addGroup( $expression, bool $reverse = false ) {
     $this->_group[] = [ $expression, $reverse ];
+    return $this;
   }
   //
   public function removeGroup( ?array $list = null ) {
 
-    // 
+    //
     if( $list === null ) $this->_group = [];
     else {
 
@@ -637,6 +639,8 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
         }
       }
     }
+
+    return $this;
   }
 
   //
@@ -654,15 +658,17 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
     }
 
     $this->_sort = $tmp;
+    return $this;
   }
   //
   public function addSort( $expression, bool $reverse = false ) {
     $this->_sort[] = [ $expression, $reverse ];
+    return $this;
   }
   //
   public function removeSort( ?array $list = null ) {
 
-    // 
+    //
     if( $list === null ) $this->_sort = [];
     else {
 
@@ -673,6 +679,8 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
         }
       }
     }
+
+    return $this;
   }
 
   //
@@ -725,11 +733,11 @@ abstract class Statement extends Expression implements StatementInterface, Helpe
 
     if( $name === null ) $this->_custom = array_fill_keys( array_keys( $this->_custom ), [] );
     if( !isset( $this->_custom[ $name ] ) ) throw new \LogicException( "There is no support for '{$name}' customs" );
-    else if( $definition === null ) $this->_custom[ $name ] = [];
+    else if( $definition === null ) $this->_custom[ (string) $name ] = [];
     else {
 
-      $index = array_search( $definition, $this->_custom[ $name ], true );
-      if( $index !== false ) array_splice( $this->_custom[ $name ], $index, 1 );
+      $index = array_search( $definition, $this->_custom[ (string) $name ], true );
+      if( $index !== false ) array_splice( $this->_custom[ (string) $name ], $index, 1 );
     }
 
     return $this;

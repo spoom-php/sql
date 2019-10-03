@@ -1,11 +1,11 @@
 <?php namespace Spoom\Sql;
 
-use Spoom\Core\Application;
 use Spoom\Core\Helper\Collection;
 use Spoom\Core\Helper\Number;
 use Spoom\Core\Helper\Text;
 use Spoom\Core\Helper;
 use Spoom\Core\Exception;
+use Spoom\Core\Severity;
 
 /**
  * @property-read string $uri
@@ -42,7 +42,7 @@ interface ConnectionInterface extends Helper\AccessableInterface {
    * Create a new name
    *
    * @param string     $definition
-   * @param bool       $quote
+   * @param bool|null  $quote
    * @param array|null $argument_list
    *
    * @return Expression\Name
@@ -105,7 +105,7 @@ interface ConnectionInterface extends Helper\AccessableInterface {
    * Similar to {@see Spoom\Core\Helper\Text::apply()} but with ability to proper quote the inserted context values
    *
    * @param string $statement The statement to process
-   * @param array  $context   The context to insert in the statement
+   * @param array|object  $context   The context to insert in the statement
    *
    * @return string Statement with the applied context
    */
@@ -245,7 +245,7 @@ abstract class Connection implements ConnectionInterface {
     else if( Collection::is( $value, true ) ) {
 
       $quoted    = [];
-      $tmp       = Collection::read( $value );
+      $tmp       = Collection::cast( $value );
       $has_array = false;
 
       if( !count( $tmp ) ) return 'NULL';
@@ -276,7 +276,7 @@ abstract class Connection implements ConnectionInterface {
     } else if( Collection::is( $value, true ) ) {
 
       $quoted    = [];
-      $tmp       = Collection::read( $value );
+      $tmp       = Collection::cast( $value );
       $has_array = false;
 
       if( count( $tmp ) ) {
@@ -338,7 +338,7 @@ class ConnectionException extends Exception\Runtime implements ExceptionInterfac
       static::ID,
       $data,
       $exception,
-      Application::SEVERITY_CRITICAL
+      Severity::CRITICAL
     );
   }
 }
@@ -363,7 +363,7 @@ class ConnectionOptionException extends Exception\Runtime implements ExceptionIn
       static::ID,
       $data,
       $exception,
-      Application::SEVERITY_WARNING
+      Severity::WARNING
     );
   }
 }

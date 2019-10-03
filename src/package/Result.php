@@ -79,7 +79,7 @@ interface ResultInterface extends \Iterator, \Countable {
    *
    * @param int $record
    *
-   * @return \object
+   * @return object
    */
   public function getObject( int $record = 0 );
   /**
@@ -92,7 +92,7 @@ interface ResultInterface extends \Iterator, \Countable {
    *
    * @return object[]
    */
-  public function getObjectList( string $index = null ): array;
+  public function getObjectList( $index = null ): array;
 
   /**
    * @since 1.2.0

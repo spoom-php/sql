@@ -10,8 +10,8 @@ class Name extends Expression {
   /**
    * @param ConnectionInterface $connection
    * @param string              $definition
-   * @param bool|null           $quote
    * @param array|null          $argument_list
+   * @param bool|null           $quote
    */
   public function __construct( ConnectionInterface $connection, string $definition, ?array $argument_list = null, ?bool $quote = null ) {
 
